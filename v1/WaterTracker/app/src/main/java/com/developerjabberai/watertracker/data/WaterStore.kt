@@ -1,6 +1,9 @@
 package com.developerjabberai.watertracker.data
 
 import android.content.Context
+import com.developerjabberai.watertracker.domain.ArtPicker
+import com.developerjabberai.watertracker.widget.ArtLibrary
+import kotlin.random.Random
 import java.time.LocalDate
 
 /** Local storage. Today's total rolls over at midnight; past days are kept for the 7-day view. */
@@ -24,6 +27,24 @@ class WaterStore(context: Context) {
     var lastPulseMs: Long
         get() = prefs.getLong("last_pulse", 0L)
         set(v) = prefs.edit().putLong("last_pulse", v).apply()
+
+    /** A per-install random number so different phones don't all show the same character on the same day. */
+    private val artSalt: Int
+        get() {
+            var salt = prefs.getInt("art_salt", 0)
+            if (salt == 0) {
+                salt = Random.nextInt(1, Int.MAX_VALUE)
+                prefs.edit().putInt("art_salt", salt).apply()
+            }
+            return salt
+        }
+
+    /** Today's character (0-3): a random pick that stays the same all day. "art_override" is a testing hook. */
+    fun artToday(): Int {
+        val forced = prefs.getInt("art_override", -1)
+        if (forced in 0 until ArtLibrary.COUNT) return forced
+        return ArtPicker.pick(java.time.LocalDate.now().toEpochDay(), artSalt, ArtLibrary.COUNT)
+    }
 
     /** Set once the first-run welcome has been completed or skipped. */
     var onboarded: Boolean

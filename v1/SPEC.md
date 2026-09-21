@@ -9,21 +9,21 @@
 The home-screen widget is the product. The app exists only for configuration and a small 7-day view.
 
 ## Widget
-- **Look:** sticker style, a chubby bottle with a bold dark outline and a pink cap on a warm yellow card, with Nunito numbers. The widget rests as a **plain bottle**. A cat expression only appears on events: the bottle turns around to show the cat, holds, then turns back.
-- **Cat expressions:** after a tap the cat smiles and blinks. On the unlock nudge it has big eyes while the dotted target line draws and translucent water rises to it, then looks worried as the water drains. On reaching the goal it grins with arms up, with the shine and sparkles.
+- **Look:** one bottle for every goal, drawn from four character illustrations (`v1/design/expressions/expression-*.svg`) on a warm yellow card, with Nunito numbers. The character stays visible at rest; its outline, face and gloss are used exactly as drawn, and our own water replaces its blue body and rises with what you've drunk.
+- **Daily character:** one of the four is picked at random each day. Every block of four days shows each character once in shuffled order, never the same one two days running, and the order differs per phone.
+- **Goals:** all goals use the same bottle. Litre tick marks on the body tell 2 L (1 tick), 3 L (2 ticks) and 4 L (3 ticks) apart.
+- **Reactions (same for every character and goal):** tap = water rises with a wave, then a happy bounce with sparkles. Unlock nudge = the character wobbles, the dotted target line draws and translucent water rises to it, then drains as a sweat drop appears. Goal reached = big hops with a shine sweep and sparkles, then a check badge.
 - **Tap:** one tap logs half a glass (100 ml) by default, or a whole glass (200 ml) if the user picks that. A glass is 200 ml.
 - **Fill animation:** water rises to the new level on tap, then the cat turns around briefly. Animation polish is a top priority. Approach: frame-sequence bitmap updates, since widgets can't run arbitrary animations.
-- **Goal display** (goal options: 2 L, 3 L, 4 L):
-  - 2 L: two 1 L bottles, filling one after another
-  - 3 L or 4 L: one big bottle
+- **Goal display** (goal options: 2 L, 3 L, 4 L): one bottle for all of them (see Look).
 - **Pace marker:** shows how much the user should have drunk by now. It follows a front-loaded curve (rises faster in the morning and afternoon, flattens toward bedtime), running between the wake and sleep times.
 - **Nudge:** the reminder is widget-only, with no notifications.
   - Fires when the user is behind pace by more than a threshold (default: half a glass)
   - Detected on unlock (ACTION_USER_PRESENT) by a minimum-priority foreground service; 10-minute cooldown between pulses; only within waking hours
-  - Pulse animation on unlock, then a resting "nudge" look (stronger gap shading and a soft glow) until the user logs water
+  - Pulse animation on unlock, then a resting "nudge" look (a stronger blue tint on the gap) until the user logs water
   - Shown as a pulse on the widget with the gap to the pace marker highlighted
   - If the user unlocks into another app, the nudge waits on the widget. There is no fallback notification.
-- **Goal reached:** one-time celebration (shine sweeps across the full bottle(s) plus sparkles), then a small check badge in the corner and the target line hides. No more nudges that day. Extra taps still log.
+- **Goal reached:** one-time celebration (hops, shine sweep, sparkles), then a small check badge in the corner and the target line hides. No more nudges that day. Extra taps still log.
 - **Daily reset:** midnight. An inexact alarm at 00:01 redraws the widget; unlock also rolls over a stale day, and yesterday's total is kept for the 7-day view.
 - **Out of scope for MVP:** undo.
 
@@ -51,6 +51,9 @@ The home-screen widget is the product. The app exists only for configuration and
 Commonly cited adequate total fluid intake is about 3.7 L/day for men and 2.7 L/day for women (US National Academies), including water from food. Drinking water alone is usually 2-3 L. The app lets users set their own goal and gives no medical advice.
 
 ## Decisions log
+- Artwork: the four Recraft-generated SVGs are converted to JSON by `v1/design/tools/svg_to_json.py` and drawn with android.graphics.Path. Character 4 has a stray dark mark at the bottom right that is in the original artwork and was left as drawn.
+- One bottle for all goals (no two-bottle layout); litre ticks show the goal.
+- Because whiskers and ears are part of each outline shape, the character no longer turns around to a plain bottle; events are reactions (bounce, wobble, hop) instead.
 - Visual direction: sticker-outline bottle (bottle only, no drop or cup) with a cat face that appears only on events (tap, nudge, goal) via a turn-around animation; resting state is the plain bottle. Goal picker tiles reuse this drawing.
 - Glass size setting replaced by "1 Tap on widget fills": Half glass or One glass. Daily goal picker reuses the widget bottle drawing.
 - Removed wake/sleep and nudge-threshold settings to keep the config screen simple; both are fixed constants in code (Pace.kt, NudgeController.kt)

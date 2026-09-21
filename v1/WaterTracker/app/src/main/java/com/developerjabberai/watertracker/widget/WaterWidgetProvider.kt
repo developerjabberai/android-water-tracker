@@ -12,7 +12,10 @@ import com.developerjabberai.watertracker.data.WaterStore
 import com.developerjabberai.watertracker.domain.Pace
 import java.time.LocalTime
 import kotlin.concurrent.thread
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sin
 
 class WaterWidgetProvider : AppWidgetProvider() {
 
@@ -30,7 +33,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
                 val from = to - store.tapMl
                 synchronized(animationLock) {
                     animateFill(context, store, from.toFloat(), to.toFloat())
-                    if (from < store.goalMl && to >= store.goalMl) celebrate(context, store, to.toFloat()) else smile(context, store, to.toFloat())
+                    if (from < store.goalMl && to >= store.goalMl) celebrate(context, store, to.toFloat()) else cheer(context, store, to.toFloat())
                     refresh(context)
                 }
             } finally {
@@ -43,7 +46,6 @@ class WaterWidgetProvider : AppWidgetProvider() {
         const val ACTION_TAP = "com.developerjabberai.watertracker.ACTION_TAP"
         private const val FILL_FRAMES = 16
         private const val FRAME_MS = 45L
-        private const val TURN_FRAMES = 9
         private const val NUDGE_REST = 0.6f
 
         /** One animation at a time, so quick repeated taps play in order instead of tangling. */
@@ -54,63 +56,80 @@ class WaterWidgetProvider : AppWidgetProvider() {
             return manager to manager.getAppWidgetIds(ComponentName(context, WaterWidgetProvider::class.java))
         }
 
-        /** Redraw all widgets at rest (the plain bottle), e.g. after a setting changed. */
+        /** Redraw all widgets at rest, e.g. after a setting changed or a new day started. */
         fun refresh(context: Context) {
             val store = WaterStore(context)
             push(context, store, Frame(store.todayMl().toFloat(), nudge = if (store.nudgePending) NUDGE_REST else 0f))
         }
 
         /**
-         * The reminder: the bottle turns around to show the cat, the dotted target line draws across,
-         * translucent water rises to it (the gap to drink), then drains as the cat looks worried, and the
-         * bottle turns back. Ends in the resting nudge look.
+         * The reminder: the character wobbles for attention, the dotted target line draws across, translucent
+         * water rises to it (the gap to drink), then drains as a sweat drop appears. Ends in the resting nudge look.
          */
         fun pulse(context: Context) = synchronized(animationLock) {
             val store = WaterStore(context)
             val level = store.todayMl().toFloat()
-            val hold = 44
-            play(context, store, hold) { h, flip, _ ->
-                val rise = ease(((h - 8) / 16f).coerceIn(0f, 1f))
-                val drain = ((h - 30) / 12f).coerceIn(0f, 1f)
-                Frame(
-                    totalMl = level,
-                    phase = h * 0.5f,
-                    nudge = 0.35f + (NUDGE_REST - 0.35f) * drain,
-                    lineProgress = (h / 8f).coerceIn(0f, 1f),
-                    preview = rise * (1f - drain * drain),
-                    face = if (h < 28) Face.NUDGE else Face.WORRY,
-                    flip = flip,
-                    blink = h in 14..15,
+            val n = 64
+            for (i in 1..n) {
+                val t = i / n.toFloat()
+                val rise = ease(((i - 12) / 16f).coerceIn(0f, 1f))
+                val drain = ((i - 38) / 14f).coerceIn(0f, 1f)
+                val wobble = (1f - t / 0.5f).coerceAtLeast(0f)
+                push(
+                    context, store,
+                    Frame(
+                        totalMl = level,
+                        phase = i * 0.5f,
+                        nudge = 0.35f + (NUDGE_REST - 0.35f) * drain,
+                        lineProgress = ((i - 4) / 9f).coerceIn(0f, 1f),
+                        preview = rise * (1f - drain * drain),
+                        rotate = 6f * sin(2 * PI * 4 * t).toFloat() * wobble,
+                        hop = 5f * abs(sin(2 * PI * 2 * t)).toFloat() * wobble,
+                        sweat = (((i - 34) / 6f).coerceIn(0f, 1f)) * (1f - ((i - 56) / 8f).coerceIn(0f, 1f)),
+                    ),
                 )
+                Thread.sleep(FRAME_MS)
             }
             refresh(context)
         }
 
-        /** After a tap: the cat turns around, smiles for a moment, and turns back. */
-        private fun smile(context: Context, store: WaterStore, level: Float) {
-            play(context, store, 18) { h, flip, _ ->
-                Frame(level, phase = h * 0.4f, face = Face.OK, flip = flip, blink = h in 9..10)
-            }
-        }
-
-        /** One-time goal-reached: big grin and arms up, with the shine and sparkles, then the check badge. */
-        private fun celebrate(context: Context, store: WaterStore, level: Float) {
-            play(context, store, 40) { _, flip, t ->
-                Frame(level, face = Face.HAPPY, flip = flip, celebrate = t)
-            }
-        }
-
-        /** Turns the bottle to its face side, holds for [hold] frames, then turns it back. */
-        private fun play(context: Context, store: WaterStore, hold: Int, build: (holdIndex: Int, flip: Float, progress: Float) -> Frame) {
-            val total = TURN_FRAMES * 2 + hold
-            var n = 0
-            fun show(h: Int, flip: Float) {
-                push(context, store, build(h, flip, ++n / total.toFloat()))
+        /** After a tap: a happy little bounce with a few sparkles. */
+        private fun cheer(context: Context, store: WaterStore, level: Float) {
+            val n = 26
+            for (i in 1..n) {
+                val t = i / n.toFloat()
+                val settle = 1f - t
+                push(
+                    context, store,
+                    Frame(
+                        level,
+                        sparkle = t,
+                        hop = 18f * abs(sin(2 * PI * t)).toFloat() * settle,
+                        squash = 1f + 0.05f * sin(4 * PI * t).toFloat() * settle,
+                    ),
+                )
                 Thread.sleep(FRAME_MS)
             }
-            for (i in 1..TURN_FRAMES) show(0, 1f - ease(i / TURN_FRAMES.toFloat()))
-            for (h in 0 until hold) show(h, 0f)
-            for (i in 1..TURN_FRAMES) show(hold - 1, ease(i / TURN_FRAMES.toFloat()))
+        }
+
+        /** One-time goal-reached: big hops with the shine and sparkles, then the check badge. */
+        private fun celebrate(context: Context, store: WaterStore, level: Float) {
+            val n = 48
+            for (i in 1..n) {
+                val t = i / n.toFloat()
+                val settle = 1f - t * 0.7f
+                val bounce = abs(sin(3 * PI * t)).toFloat()
+                push(
+                    context, store,
+                    Frame(
+                        level,
+                        celebrate = t,
+                        hop = 34f * bounce * settle,
+                        squash = 1f - 0.06f * (1f - bounce) * settle,
+                    ),
+                )
+                Thread.sleep(FRAME_MS)
+            }
         }
 
         private fun ease(t: Float) = t * t * (3f - 2f * t)
