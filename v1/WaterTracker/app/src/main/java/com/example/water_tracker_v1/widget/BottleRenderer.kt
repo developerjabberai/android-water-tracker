@@ -38,7 +38,7 @@ object BottleRenderer {
         val bottles = if (goalMl <= 2000) 2 else 1
         val cap = goalMl.toFloat() / bottles
         val top = 40f
-        val bottom = SIZE - 122f
+        val bottom = SIZE - 104f
         val bodyW = if (bottles == 2) 120f else 190f
         val gap = SIZE / (bottles + 1f)
 
@@ -54,18 +54,10 @@ object BottleRenderer {
             drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap)
         }
 
-        val behindMl = paceFrac * goalMl - totalMl
-        val status = when {
-            totalMl >= goalMl -> "Goal reached"
-            behindMl >= 25f -> "${(Math.round(behindMl / 25f) * 25)} ml to go"
-            else -> "On track"
-        }
         p.style = Paint.Style.FILL; p.color = TEXT
         p.textAlign = Paint.Align.CENTER; p.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        p.textSize = 46f
-        c.drawText(status, SIZE / 2f, SIZE - 56f, p)
-        p.textSize = 30f; p.typeface = Typeface.DEFAULT; p.alpha = 170
-        c.drawText("%.2f / %.0f L".format(totalMl / 1000f, goalMl / 1000f), SIZE / 2f, SIZE - 20f, p)
+        p.textSize = 56f
+        c.drawText("${totalMl.toInt()} ml", SIZE / 2f, SIZE - 36f, p)
         return bmp
     }
 
