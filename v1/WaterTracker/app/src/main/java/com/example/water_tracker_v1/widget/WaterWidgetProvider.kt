@@ -54,7 +54,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
 
     private fun push(context: Context, manager: AppWidgetManager, ids: IntArray, store: WaterStore, level: Float, phase: Float, waveAmp: Float) {
         val pace = Pace.fraction(LocalTime.now(), store.wake, store.sleep)
-        val bmp = BottleRenderer.render(level, store.goalMl, pace, phase, waveAmp)
+        val bmp = BottleRenderer.render(context, level, store.goalMl, pace, phase, waveAmp)
         val views = RemoteViews(context.packageName, R.layout.widget_water).apply {
             setImageViewBitmap(R.id.widget_image, bmp)
             val tap = Intent(context, WaterWidgetProvider::class.java).setAction(ACTION_TAP)

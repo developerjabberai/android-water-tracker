@@ -1,5 +1,6 @@
 package com.example.water_tracker_v1.widget
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -20,15 +21,27 @@ object BottleRenderer {
     private val WATER = Color.parseColor("#2E9BF0")
     private val WATER_BACK = Color.parseColor("#7CC3F7")
     private val TEXT = Color.parseColor("#12324A")
-    private val ROUNDED_BOLD: Typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD)
-    private val ROUNDED_MEDIUM: Typeface = Typeface.create("sans-serif-rounded", Typeface.NORMAL)
+    private var numberFont: Typeface = Typeface.DEFAULT_BOLD
+    private var loaded = false
+
+    /** Bundled Nunito (variable weight) so the widget looks the same on every phone. */
+    private fun loadFont(context: Context) {
+        if (loaded) return
+        loaded = true
+        runCatching {
+            numberFont = Typeface.Builder(context.assets, "fonts/Nunito.ttf")
+                .setFontVariationSettings("'wght' 800")
+                .build() ?: numberFont
+        }
+    }
 
     /**
      * @param totalMl  amount to draw (may be mid-animation)
      * @param paceFrac fraction of goal the user should have reached now
      * @param waveAmp  0..1 wave strength, decays after a tap
      */
-    fun render(totalMl: Float, goalMl: Int, paceFrac: Float, phase: Float, waveAmp: Float): Bitmap {
+    fun render(context: Context, totalMl: Float, goalMl: Int, paceFrac: Float, phase: Float, waveAmp: Float): Bitmap {
+        loadFont(context)
         val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -68,16 +81,16 @@ object BottleRenderer {
             totalMl.toInt().toString() to "ml"
         }
         p.style = Paint.Style.FILL; p.color = TEXT; p.textAlign = Paint.Align.LEFT
-        p.typeface = ROUNDED_BOLD; p.textSize = 66f
+        p.typeface = numberFont; p.textSize = 66f
         val numW = p.measureText(number)
-        p.typeface = ROUNDED_BOLD; p.textSize = 42f
+        p.typeface = numberFont; p.textSize = 42f
         val unitW = p.measureText(unit)
         val gap = 8f
         val x = (SIZE - (numW + gap + unitW)) / 2f
         val baseline = SIZE - 30f
-        p.typeface = ROUNDED_BOLD; p.textSize = 66f
+        p.typeface = numberFont; p.textSize = 66f
         c.drawText(number, x, baseline, p)
-        p.typeface = ROUNDED_BOLD; p.textSize = 42f; p.alpha = 170
+        p.typeface = numberFont; p.textSize = 42f; p.alpha = 170
         c.drawText(unit, x + numW + gap, baseline, p)
         p.alpha = 255
     }
