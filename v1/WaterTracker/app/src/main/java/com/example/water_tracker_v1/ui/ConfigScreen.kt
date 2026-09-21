@@ -1,19 +1,7 @@
 package com.example.water_tracker_v1.ui
 
 import android.app.TimePickerDialog
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.text.style.TextAlign
-import com.example.water_tracker_v1.widget.BottleRenderer
-import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,11 +51,11 @@ import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val Blue = Color(0xFF2E9BF0)
-private val Ink = Color(0xFF12324A)
+internal val Blue = Color(0xFF2E9BF0)
+internal val Ink = Color(0xFF12324A)
 
 @Composable
-fun ConfigScreen(resumeTick: Int = 0) {
+fun ConfigScreen() {
     val context = LocalContext.current
     val store = remember { WaterStore(context) }
     var goal by remember { mutableIntStateOf(store.goalMl) }
@@ -76,16 +64,6 @@ fun ConfigScreen(resumeTick: Int = 0) {
     var wake by remember { mutableStateOf(store.wake) }
     var sleep by remember { mutableStateOf(store.sleep) }
     val history = remember { store.historyMl() }
-
-    var hasWidget by remember(resumeTick) { mutableStateOf(widgetCount(context) > 0) }
-    var waitingForPin by remember { mutableStateOf(false) }
-    LaunchedEffect(waitingForPin) {
-        if (!waitingForPin) return@LaunchedEffect
-        var tries = 0
-        while (tries++ < 45 && widgetCount(context) == 0) delay(1000)
-        hasWidget = widgetCount(context) > 0
-        waitingForPin = false
-    }
 
     fun changed() = WaterWidgetProvider.refresh(context)
 
@@ -101,15 +79,16 @@ fun ConfigScreen(resumeTick: Int = 0) {
         Text("Water Tracker", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
         Text("The widget is the app. Set it up here, then tap it on your home screen.", color = Ink.copy(alpha = 0.7f))
 
-        if (hasWidget) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("\u2713  Widget is on your home screen", color = Blue, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                TextButton(onClick = { requestPin(context) }) { Text("Add another", color = Blue) }
-            }
-        } else {
-            WidgetOnboarding(goalMl = goal, pinSupported = canPin(context)) {
-                requestPin(context)
-                waitingForPin = true
+        Section("Home screen widget") {
+            Text("The widget is where you log water. Add it any time, on any home screen page.", color = Ink.copy(alpha = 0.75f))
+            if (canPin(context)) {
+                Button(
+                    onClick = { requestPin(context) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                ) { Text("Add widget to home screen", fontWeight = FontWeight.Bold) }
+            } else {
+                Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.")
             }
         }
 
@@ -138,43 +117,6 @@ fun ConfigScreen(resumeTick: Int = 0) {
             Hint("The widget pulses when you unlock your phone and you're this far behind")
         }
 
-    }
-}
-
-@Composable
-private fun WidgetOnboarding(goalMl: Int, pinSupported: Boolean, onAdd: () -> Unit) {
-    val context = LocalContext.current
-    val preview = remember(goalMl) {
-        BottleRenderer.render(context, goalMl * 0.55f, goalMl, 0.7f, 0f, 0f).asImageBitmap()
-    }
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(2.dp, Blue),
-    ) {
-        Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Step 1: put the widget on your home screen", fontWeight = FontWeight.Bold, color = Ink, textAlign = TextAlign.Center)
-            Image(preview, contentDescription = "Widget preview", modifier = Modifier.size(150.dp))
-            Text(
-                "This is where you log water. One tap = half a glass.",
-                color = Ink.copy(alpha = 0.75f),
-                textAlign = TextAlign.Center,
-            )
-            if (pinSupported) {
-                Button(
-                    onClick = onAdd,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
-                ) { Text("Add to home screen", fontWeight = FontWeight.Bold) }
-                Hint("Your phone will ask you to confirm")
-            } else {
-                Text(
-                    "Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.",
-                    color = Ink, textAlign = TextAlign.Center,
-                )
-            }
-        }
     }
 }
 
@@ -287,18 +229,4 @@ private fun WeekChart(days: List<Pair<java.time.LocalDate, Int>>, goalMl: Int) {
         }
     }
     Hint("Litres per day. Solid bars hit the goal.")
-}
-
-private fun widgetCount(context: Context): Int {
-    val manager = AppWidgetManager.getInstance(context)
-    return manager.getAppWidgetIds(ComponentName(context, WaterWidgetProvider::class.java)).size
-}
-
-private fun canPin(context: Context) = AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
-
-private fun requestPin(context: Context) {
-    val manager = AppWidgetManager.getInstance(context)
-    if (manager.isRequestPinAppWidgetSupported) {
-        manager.requestPinAppWidget(ComponentName(context, WaterWidgetProvider::class.java), null, null)
-    }
 }

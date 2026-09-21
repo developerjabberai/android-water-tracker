@@ -38,6 +38,11 @@ class WaterStore(context: Context) {
         get() = prefs.getLong("last_pulse", 0L)
         set(v) = prefs.edit().putLong("last_pulse", v).apply()
 
+    /** Set once the first-run welcome has been completed or skipped. */
+    var onboarded: Boolean
+        get() = prefs.getBoolean("onboarded", false)
+        set(v) = prefs.edit().putBoolean("onboarded", v).apply()
+
     val tapMl: Int get() = glassMl / 2
 
     fun todayMl(): Int {
