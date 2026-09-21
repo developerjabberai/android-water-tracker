@@ -29,6 +29,15 @@ class WaterStore(context: Context) {
         get() = prefs.getInt("nudge", 100)
         set(v) = prefs.edit().putInt("nudge", v).apply()
 
+    /** True while the widget is showing its "you're behind" look. Cleared by a tap or a new day. */
+    var nudgePending: Boolean
+        get() { rollOverIfNeeded(); return prefs.getBoolean("nudge_pending", false) }
+        set(v) = prefs.edit().putBoolean("nudge_pending", v).apply()
+
+    var lastPulseMs: Long
+        get() = prefs.getLong("last_pulse", 0L)
+        set(v) = prefs.edit().putLong("last_pulse", v).apply()
+
     val tapMl: Int get() = glassMl / 2
 
     fun todayMl(): Int {
@@ -38,7 +47,7 @@ class WaterStore(context: Context) {
 
     fun addTap(): Int {
         val total = todayMl() + tapMl
-        prefs.edit().putInt("today", total).apply()
+        prefs.edit().putInt("today", total).putBoolean("nudge_pending", false).apply()
         return total
     }
 
@@ -56,6 +65,6 @@ class WaterStore(context: Context) {
         if (stored == today) return
         val e = prefs.edit()
         if (stored != null) e.putInt("day_$stored", prefs.getInt("today", 0))
-        e.putString("date", today).putInt("today", 0).apply()
+        e.putString("date", today).putInt("today", 0).putBoolean("nudge_pending", false).apply()
     }
 }
