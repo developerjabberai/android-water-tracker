@@ -4,16 +4,20 @@ Last updated: 21 September 2026
 
 Purrsip is a home-screen widget that helps you log the water you drink.
 
-**Data we collect:** none. The amount of water you log, your daily goal and your settings are stored only on your device. We do not collect, transmit, sell or share any personal data, and the app has no accounts, analytics, ads or third-party SDKs.
+**Data we collect: none.** The amount of water you log, your daily goal, your creeper level and your settings are stored only on your device. We do not collect, transmit, sell or share any personal data. The app has no accounts, no analytics, no ads and no third-party SDKs, and it does not request the internet permission, so it cannot send anything off your device.
 
-**Permissions:**
+**Android backup.** If you have Android's backup turned on, the app's small settings file (goal, water log, creeper level) may be included in your own Google backup so it can be restored on a new phone. That backup belongs to your Google account and is not accessible to us.
+
+**Permissions and why:**
 - *Foreground service:* used only so the widget can notice when you unlock your phone and remind you to drink. It shows a quiet, minimum-priority notification. Nothing about your unlocks is stored or sent anywhere.
-- *Run at startup:* restores the reminder listener after your phone restarts.
+- *Run at startup:* restores that listener after your phone restarts.
 
-**Deleting your data:** uninstalling the app removes everything it stored.
+**Deleting your data:** uninstalling the app removes everything it stored on your device.
+
+**Children:** Purrsip is not directed at children under 13 and collects no data from anyone.
 
 **Health:** Purrsip is not a medical app and gives no medical advice. Talk to a healthcare professional about how much water is right for you.
 
-**Contact:** <your-support-email>
+**Contact:** open an issue at https://github.com/developerjabberai/android-water-tracker/issues
 
-**Changes:** if this policy changes, the updated version will be posted at the same address.
+**Changes:** if this policy changes, the updated version will be posted at this same address.
