@@ -40,8 +40,12 @@ object BottleRenderer {
      * @param paceFrac fraction of goal the user should have reached now
      * @param waveAmp  0..1 wave strength, decays after a tap
      * @param nudge    0..1 how strongly to highlight the gap to the target (0 = normal)
+     * @param lineProgress 0..1 how much of the dotted target line is drawn (left to right)
+     * @param preview  0..1 how far translucent "preview" water has risen from the current level to the target
      */
-    fun render(context: Context, totalMl: Float, goalMl: Int, paceFrac: Float, phase: Float, waveAmp: Float, nudge: Float = 0f): Bitmap {
+    fun render(context: Context, totalMl: Float, goalMl: Int, paceFrac: Float, phase: Float, waveAmp: Float, nudge: Float = 0f,
+        lineProgress: Float = 1f, preview: Float = 0f,
+    ): Bitmap {
         loadFont(context)
         val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
@@ -73,7 +77,7 @@ object BottleRenderer {
             p.style = Paint.Style.STROKE; p.strokeWidth = 7f; p.color = GLASS
             c.drawPath(bottle, p)
 
-            drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap, nudge)
+            drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap, nudge, lineProgress, preview, phase)
         }
 
         drawAmount(c, p, totalMl)
@@ -106,9 +110,10 @@ object BottleRenderer {
     private fun drawGhostLevel(
         c: Canvas, p: Paint, bottle: Path, cx: Float, top: Float, bottom: Float,
         bodyW: Float, fill: Float, paceLocal: Float, nudge: Float,
+        lineProgress: Float, preview: Float, phase: Float,
     ) {
-        if (paceLocal <= 0f || paceLocal >= 1f) return
-        val yGhost = levelY(top, bottom, paceLocal)
+        if (paceLocal <= 0f || (paceLocal >= 1f && fill >= 1f)) return
+        val yGhost = levelY(top, bottom, paceLocal.coerceAtMost(1f))
         val yWater = levelY(top, bottom, fill)
         val left = cx - bodyW / 2
         val right = cx + bodyW / 2
@@ -117,12 +122,30 @@ object BottleRenderer {
         if (yGhost < yWater) {
             p.style = Paint.Style.FILL; p.color = WATER; p.alpha = (40 + 110 * nudge).toInt()
             c.drawRect(left, yGhost, right, yWater, p)
+            if (preview > 0f) {
+                // Translucent water rising from the current level toward the target line.
+                val yTop = yWater + (yGhost - yWater) * preview
+                val path = Path().apply {
+                    moveTo(left, yWater + 4f)
+                    var x = left
+                    while (x <= right) {
+                        lineTo(x, yTop + 5f * sin(((x - left) / bodyW * 2 * PI + phase * 3).toDouble()).toFloat())
+                        x += 6f
+                    }
+                    lineTo(right, yWater + 4f); close()
+                }
+                p.color = WATER_BACK; p.alpha = 210
+                c.drawPath(path, p)
+            }
         }
-        p.style = Paint.Style.STROKE; p.strokeWidth = 5f + 4f * nudge; p.strokeCap = Paint.Cap.ROUND
-        p.color = WATER; p.alpha = (180 + 75 * nudge).toInt()
-        p.pathEffect = DashPathEffect(floatArrayOf(2f, 12f), 0f)
-        c.drawLine(left, yGhost, right, yGhost, p)
-        p.pathEffect = null; p.alpha = 255; p.strokeCap = Paint.Cap.BUTT
+        val lineEnd = left + bodyW * lineProgress.coerceIn(0f, 1f)
+        if (lineEnd > left) {
+            p.style = Paint.Style.STROKE; p.strokeWidth = 5f + 4f * nudge; p.strokeCap = Paint.Cap.ROUND
+            p.color = WATER; p.alpha = (180 + 75 * nudge).toInt()
+            p.pathEffect = DashPathEffect(floatArrayOf(2f, 12f), 0f)
+            c.drawLine(left, yGhost, lineEnd, yGhost, p)
+            p.pathEffect = null; p.alpha = 255; p.strokeCap = Paint.Cap.BUTT
+        }
         c.restore()
     }
 
