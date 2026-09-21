@@ -46,12 +46,16 @@ class UnlockService : Service() {
 
     /** Also called on every start, so the notification appears as soon as the user allows notifications. */
     private fun showForeground() {
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        // Tapping it goes to the home screen, where the widget is.
+        val home = PendingIntent.getActivity(
+            this, 0, Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
         val notification = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_water)
             .setContentTitle("Water Tracker")
-            .setContentText("Watching your pace")
-            .setContentIntent(open)
+            .setContentText("Tap your widget to log water")
+            .setContentIntent(home)
             .setOngoing(true)
             .setShowWhen(false)
             .build()

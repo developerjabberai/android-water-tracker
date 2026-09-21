@@ -28,7 +28,7 @@ import com.developerjabberai.watertracker.ui.widgetCount
 class MainActivity : ComponentActivity() {
     private var resumeTick by mutableIntStateOf(0)
 
-    // Once allowed, start the service again so its quiet "Watching your pace" notification appears.
+    // Once allowed, start the service again so its quiet notification appears.
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { UnlockService.start(this) }
 
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                         text = {
                             Text(
                                 "To remind you when you unlock your phone, Water Tracker keeps a small service running. " +
-                                    "Android shows it as one silent notification, \"Watching your pace\", which you can hide any time. " +
+                                    "Android shows it as one silent notification (\"Tap your widget to log water\") that you can hide any time. " +
                                     "The reminder works either way.",
                             )
                         },

@@ -22,7 +22,7 @@ HOW IT WORKS
 Add the widget to your home screen in one tap from the app, pick your daily goal, and choose whether a tap logs half a glass or a full one. That's it.
 
 A NOTE ON PERMISSIONS
-To notice when you unlock your phone, the widget uses a small background service. It shows one quiet, low-priority notification ("Watching your pace") that you can hide. Nothing about your unlocks is stored or sent anywhere.
+To notice when you unlock your phone, the widget uses a small background service. It shows one quiet, low-priority notification ("Tap your widget to log water") that you can hide. Nothing about your unlocks is stored or sent anywhere.
 
 Water Tracker is not a medical app and gives no medical advice.
 

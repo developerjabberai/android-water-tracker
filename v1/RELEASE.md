@@ -39,5 +39,5 @@ Upload `app/build/outputs/bundle/release/app-release.aab`. Bump `versionCode` in
 
 ## Notes
 - The app gives no medical advice. If the Health apps declaration appears, choose the option that fits a simple hydration logger and state that it makes no medical claims.
-- Notification: the foreground service shows a minimum-priority "Watching your pace" notification. Mention it in the listing so it is not a surprise.
+- Notification: the foreground service shows a minimum-priority "Tap your widget to log water" notification. Mention it in the listing so it is not a surprise.
 - If the foreground service is rejected, the fallback is a periodic (about 15 minute) check instead of an unlock listener.

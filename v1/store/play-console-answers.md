@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.5 (code 6) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.6 (code 7) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
@@ -31,9 +31,9 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 
 ## 4. Foreground service declaration (App content > Foreground service permissions)
 - Type: **Special use** (`FOREGROUND_SERVICE_SPECIAL_USE`, subtype text is in the manifest)
-- Where it is used: the "Watching your pace" service (`UnlockService`)
+- Where it is used: the background reminder service (`UnlockService`)
 - Justification (paste): *The home-screen widget reminds the user to drink water when they unlock their phone. Android does not deliver the unlock event (ACTION_USER_PRESENT) to a manifest-declared receiver, so a minimal foreground service keeps a runtime receiver registered for it. The service shows one minimum-priority notification, does no network or heavy work, and stores nothing about unlocks.*
-- Demo video: `v1/store/video/foreground-service-demo.mp4` (about 30 seconds, captioned). Upload it to YouTube as **Unlisted** and paste the link in the declaration. It shows the widget, the quiet "Watching your pace" notification, locking and unlocking the phone, and the widget's reminder.
+- Demo video: `v1/store/video/foreground-service-demo.mp4` (about 30 seconds, captioned). Upload it to YouTube as **Unlisted** and paste the link in the declaration. It shows the widget, the quiet "Tap your widget to log water" notification, locking and unlocking the phone, and the widget's reminder.
 - Fallback if this is rejected: replace the unlock listener with a periodic (about 15 minute) check, which needs no foreground service.
 
 ## 5. Permissions summary (for your own reference)
@@ -41,7 +41,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 |---|---|
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE` | The unlock listener above |
 | `RECEIVE_BOOT_COMPLETED` | Restart that listener after a reboot |
-| `POST_NOTIFICATIONS` | Lets Android show the service's quiet "Watching your pace" notification (asked once, after the welcome, with a short in-app explanation first; optional) |
+| `POST_NOTIFICATIONS` | Lets Android show the service's quiet "Tap your widget to log water" notification (asked once, after the welcome, with a short in-app explanation first; optional) |
 No location, contacts, storage, camera, microphone or internet permissions.
 
 ## 6. Release
