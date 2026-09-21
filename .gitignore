@@ -22,3 +22,6 @@ keystore.properties
 
 # Demo recordings are uploaded to YouTube, not kept in git
 v1/store/video/
+
+# Built bundles are uploaded to Play, not kept in git
+v1/releases/
