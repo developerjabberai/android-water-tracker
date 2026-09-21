@@ -72,7 +72,13 @@ object BottleRenderer {
     private const val ART_MAX_H = 300f
     private const val ART_TOP = 12f
 
-    private val BG = Color.parseColor("#FFD966")
+    /** Each character has its own background colour, so the widget's colour changes with the day's character. */
+    private val BACKGROUNDS = intArrayOf(
+        Color.parseColor("#FFD966"), // sunny yellow
+        Color.parseColor("#FFB995"), // peach
+        Color.parseColor("#FFB3CF"), // pink
+        Color.parseColor("#C9B6FF"), // lavender
+    )
     private val INK = Color.parseColor("#12324A")
     private val GLASS = Color.parseColor("#EAF4FF")
     private val WATER_LIGHT = Color.parseColor("#9BCCF9")
@@ -97,8 +103,9 @@ object BottleRenderer {
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
+        val artIndex = if (f.art >= 0) f.art else WaterStore(context).artToday()
         val card = RectF(0f, 0f, SIZE.toFloat(), SIZE.toFloat())
-        p.color = BG
+        p.color = BACKGROUNDS[artIndex.coerceIn(0, BACKGROUNDS.size - 1)]
         c.drawRoundRect(card, 70f, 70f, p)
         if (f.flash > 0f) {
             p.color = f.flashColor; p.alpha = (255 * f.flash.coerceIn(0f, 1f)).toInt()
@@ -106,7 +113,7 @@ object BottleRenderer {
             p.alpha = 255
         }
 
-        val art = ArtLibrary.get(context, if (f.art >= 0) f.art else WaterStore(context).artToday())
+        val art = ArtLibrary.get(context, artIndex)
         val s = min(ART_MAX_W / art.outline.width(), ART_MAX_H / art.outline.height())
         val cx = SIZE / 2f
         val feetY = ART_TOP + art.outline.height() * s

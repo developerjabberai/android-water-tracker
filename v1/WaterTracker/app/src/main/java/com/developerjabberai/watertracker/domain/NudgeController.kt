@@ -19,7 +19,7 @@ object NudgeController {
         val total = store.todayMl()
         val behind = Pace.fraction(now) * store.goalMl - total
 
-        if (!Pace.isAwake(now) || total >= store.goalMl || behind < BEHIND_THRESHOLD_ML) {
+        if (!(Pace.isAwake(now) || store.anyHourForTesting(context)) || total >= store.goalMl || behind < BEHIND_THRESHOLD_ML) {
             store.nudgePending = false
             WaterWidgetProvider.refresh(context)
             return

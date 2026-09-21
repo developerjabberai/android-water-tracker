@@ -69,6 +69,11 @@ class WaterStore(context: Context) {
         return old to new
     }
 
+    /** Testing only: lets a debuggable build fire the reminder at any hour. Always false in release builds. */
+    fun anyHourForTesting(context: Context): Boolean =
+        (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
+            prefs.getBoolean("test_any_hour", false)
+
     /** So we only ask for the notification permission once. */
     var notificationsAsked: Boolean
         get() = prefs.getBoolean("notifications_asked", false)
