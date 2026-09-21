@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import com.developerjabberai.watertracker.widget.BottleRenderer
 import com.developerjabberai.watertracker.widget.Frame
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,7 +81,7 @@ fun ConfigScreen(resumeTick: Int = 0) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Water Tracker", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
-        Text("The widget is the app. Set it up here, then tap it on your home screen.", color = Ink.copy(alpha = 0.7f))
+        Text("Pick your goal below, then tap the widget on your home screen to log water.", color = Ink.copy(alpha = 0.7f))
 
         Section("Home screen widget") {
             // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
@@ -90,6 +92,11 @@ fun ConfigScreen(resumeTick: Int = 0) {
                     color = Blue, fontWeight = FontWeight.Bold,
                 )
                 Text("Tap it there to log water.", color = Ink.copy(alpha = 0.75f))
+                Button(
+                    onClick = { goToWidget(context) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                ) { Text("Check the widget", fontWeight = FontWeight.Bold) }
                 if (canPin(context)) {
                     TextButton(onClick = { requestPin(context) }) { Text("Add another", color = Blue) }
                 }
@@ -239,4 +246,10 @@ private fun WeekChart(days: List<Pair<java.time.LocalDate, Int>>, goalMl: Int) {
         }
     }
     Hint("Litres per day. Solid bars hit the goal.")
+}
+
+/** Leaves the app for the home screen, where the widget lives, with a nudge to tap it. */
+private fun goToWidget(context: android.content.Context) {
+    context.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    Toast.makeText(context, "Tap your widget to log water", Toast.LENGTH_LONG).show()
 }
