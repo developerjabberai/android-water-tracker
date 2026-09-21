@@ -4,18 +4,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import com.example.water_tracker_v1.service.UnlockService
 import com.example.water_tracker_v1.ui.ConfigScreen
 import com.example.water_tracker_v1.ui.theme.Watertracker_v1Theme
 
 class MainActivity : ComponentActivity() {
+    private var resumeTick by mutableIntStateOf(0)
+
+    override fun onResume() {
+        super.onResume()
+        resumeTick++
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         UnlockService.start(this)
         setContent {
             Watertracker_v1Theme(dynamicColor = false) {
-                ConfigScreen()
+                ConfigScreen(resumeTick)
             }
         }
     }
