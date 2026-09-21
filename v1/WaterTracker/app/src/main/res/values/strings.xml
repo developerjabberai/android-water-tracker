@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Water-tracker_v1</string>
+    <string name="widget_description">Tap to log half a glass of water</string>
 </resources>
