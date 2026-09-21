@@ -9,15 +9,17 @@ import java.time.LocalTime
 object NudgeController {
     private const val COOLDOWN_MS = 10 * 60 * 1000L
 
+    /** How far behind the target (ml) before the widget nudges. */
+    private const val BEHIND_THRESHOLD_ML = 100
+
     /** Call on a background thread: may play the pulse animation (~3 s). */
     fun onUnlock(context: Context) {
         val store = WaterStore(context)
         val now = LocalTime.now()
-        val awake = now >= store.wake && now <= store.sleep
         val total = store.todayMl()
-        val behind = Pace.fraction(now, store.wake, store.sleep) * store.goalMl - total
+        val behind = Pace.fraction(now) * store.goalMl - total
 
-        if (!awake || total >= store.goalMl || behind < store.nudgeMl) {
+        if (!Pace.isAwake(now) || total >= store.goalMl || behind < BEHIND_THRESHOLD_ML) {
             store.nudgePending = false
             WaterWidgetProvider.refresh(context)
             return

@@ -1,6 +1,5 @@
 package com.example.water_tracker_v1.ui
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
@@ -47,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.water_tracker_v1.data.WaterStore
 import com.example.water_tracker_v1.widget.WaterWidgetProvider
-import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -60,9 +58,6 @@ fun ConfigScreen() {
     val store = remember { WaterStore(context) }
     var goal by remember { mutableIntStateOf(store.goalMl) }
     var glass by remember { mutableIntStateOf(store.glassMl) }
-    var nudge by remember { mutableIntStateOf(store.nudgeMl) }
-    var wake by remember { mutableStateOf(store.wake) }
-    var sleep by remember { mutableStateOf(store.sleep) }
     val history = remember { store.historyMl() }
 
     fun changed() = WaterWidgetProvider.refresh(context)
@@ -103,20 +98,6 @@ fun ConfigScreen() {
             GlassPicker(listOf(200, 300, 400), glass) { glass = it; store.glassMl = it; changed() }
             Hint("One tap on the widget = half a glass = ${glass / 2} ml")
         }
-
-        Section("Waking hours") {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TimeButton("Wake", wake, Modifier.weight(1f)) { wake = it; store.wake = it; changed() }
-                TimeButton("Sleep", sleep, Modifier.weight(1f)) { sleep = it; store.sleep = it; changed() }
-            }
-            Hint("Your target rises faster in the morning and flattens toward bedtime")
-        }
-
-        Section("Nudge me when I'm behind by") {
-            Chips(listOf(100, 200, 300), nudge, { "$it ml" }) { nudge = it; store.nudgeMl = it }
-            Hint("The widget pulses when you unlock your phone and you're this far behind")
-        }
-
     }
 }
 
@@ -194,15 +175,6 @@ private fun Chips(options: List<Int>, selected: Int, label: (Int) -> String, onP
             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Blue.copy(alpha = 0.18f), selectedLabelColor = Ink),
         ) }
     }
-}
-
-@Composable
-private fun TimeButton(label: String, time: LocalTime, modifier: Modifier, onPick: (LocalTime) -> Unit) {
-    val context = LocalContext.current
-    OutlinedButton(
-        modifier = modifier,
-        onClick = { TimePickerDialog(context, { _, h, m -> onPick(LocalTime.of(h, m)) }, time.hour, time.minute, false).show() },
-    ) { Text("$label  %02d:%02d".format(time.hour, time.minute)) }
 }
 
 @Composable

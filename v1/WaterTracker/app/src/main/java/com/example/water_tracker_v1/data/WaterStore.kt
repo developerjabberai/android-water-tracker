@@ -2,7 +2,6 @@ package com.example.water_tracker_v1.data
 
 import android.content.Context
 import java.time.LocalDate
-import java.time.LocalTime
 
 /** Local storage. Today's total rolls over at midnight; past days are kept for the 7-day view. */
 class WaterStore(context: Context) {
@@ -15,19 +14,6 @@ class WaterStore(context: Context) {
     var glassMl: Int
         get() = prefs.getInt("glass", 200)
         set(v) = prefs.edit().putInt("glass", v).apply()
-
-    var wake: LocalTime
-        get() = LocalTime.ofSecondOfDay(prefs.getInt("wake", 7 * 3600).toLong())
-        set(v) = prefs.edit().putInt("wake", v.toSecondOfDay()).apply()
-
-    var sleep: LocalTime
-        get() = LocalTime.ofSecondOfDay(prefs.getInt("sleep", 23 * 3600).toLong())
-        set(v) = prefs.edit().putInt("sleep", v.toSecondOfDay()).apply()
-
-    /** How far behind pace (ml) before the widget nudges. */
-    var nudgeMl: Int
-        get() = prefs.getInt("nudge", 100)
-        set(v) = prefs.edit().putInt("nudge", v).apply()
 
     /** True while the widget is showing its "you're behind" look. Cleared by a tap or a new day. */
     var nudgePending: Boolean

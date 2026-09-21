@@ -103,7 +103,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
         ) {
             val (manager, ids) = ids(context)
             if (ids.isEmpty()) return
-            val pace = Pace.fraction(LocalTime.now(), store.wake, store.sleep)
+            val pace = Pace.fraction(LocalTime.now())
             val bmp = BottleRenderer.render(context, level, store.goalMl, pace, phase, waveAmp, nudge, lineProgress, preview, celebrate)
             val views = RemoteViews(context.packageName, R.layout.widget_water).apply {
                 setImageViewBitmap(R.id.widget_image, bmp)

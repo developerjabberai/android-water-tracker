@@ -33,8 +33,6 @@ The home-screen widget is the product. The app exists only for configuration and
 ## Config app
 - Daily goal: 2 L, 3 L or 4 L
 - Glass size: 200, 300 or 400 ml (default 200), shown as a visual picker with what one tap adds
-- Wake and sleep times (defaults 07:00 and 23:00)
-- Nudge sensitivity: 100, 200 or 300 ml behind pace (default 100)
 - Simple 7-day bar view plus today's total
 - "Add widget to home screen" button, always present (no show/hide logic)
 
@@ -44,13 +42,14 @@ The home-screen widget is the product. The app exists only for configuration and
 | Goal | 2 L (choose from 2/3/4 L) |
 | Glass | 200 ml |
 | Tap | 100 ml |
-| Wake / sleep | 07:00 / 23:00 |
-| Nudge threshold | 100 ml behind pace (options 100/200/300) |
+| Waking hours (fixed, not configurable) | 07:00 to 23:00 |
+| Nudge threshold (fixed, not configurable) | 100 ml behind target |
 
 ## Reference: daily intake
 Commonly cited adequate total fluid intake is about 3.7 L/day for men and 2.7 L/day for women (US National Academies), including water from food. Drinking water alone is usually 2-3 L. The app lets users set their own goal and gives no medical advice.
 
 ## Decisions log
+- Removed wake/sleep and nudge-threshold settings to keep the config screen simple; both are fixed constants in code (Pace.kt, NudgeController.kt)
 - First launch: welcome screen with Add widget as the single CTA, then config; config always keeps an add-widget button
 - Goal reached: shine + sparkles once, then a check badge
 - Stack: Kotlin (only option that renders widgets natively)
