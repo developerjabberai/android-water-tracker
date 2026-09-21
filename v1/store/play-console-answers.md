@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.9 (code 10) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.10 (code 11) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
