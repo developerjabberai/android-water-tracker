@@ -58,12 +58,11 @@ class MainActivity : ComponentActivity() {
                 if (explainNotifications) {
                     AlertDialog(
                         onDismissRequest = { store.notificationsAsked = true; explainNotifications = false },
-                        title = { Text("Allow one quiet notification?") },
+                        title = { Text("Allow a quiet notification?") },
                         text = {
                             Text(
-                                "To remind you when you unlock your phone, Water Tracker keeps a small service running. " +
-                                    "Android shows it as one silent notification (\"Tap your widget to log water\") that you can hide any time. " +
-                                    "The reminder works either way.",
+                                "Water Tracker shows one small, silent notification so it can remind you to drink. " +
+                                    "You can hide it any time. Reminders still work if you say no.",
                             )
                         },
                         confirmButton = {
