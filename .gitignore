@@ -14,3 +14,8 @@ captures/
 .DS_Store
 # Claude
 .claude/
+
+# Release signing: never commit keys or their passwords
+keystore.properties
+*.jks
+*.keystore

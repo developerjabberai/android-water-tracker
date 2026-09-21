@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon layer (Android 13+): the system tints this by alpha only, so it is just outline and features. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.55"
+        android:scaleY="0.55"
+        android:translateX="7.8"
+        android:translateY="11.65">
+        <path
+            android:pathData="M64,55 V38 Q64,30 72,30 H96 Q104,30 104,38 V55 A34,34 0 0 1 130,88 V100 A34,34 0 0 1 96,134 H72 A34,34 0 0 1 38,100 V88 A34,34 0 0 1 64,55 Z"
+            android:strokeColor="#000000"
+            android:strokeLineJoin="round"
+            android:strokeWidth="6" />
+        <path
+            android:pathData="M64,84 H104"
+            android:strokeColor="#000000"
+            android:strokeLineCap="round"
+            android:strokeWidth="5" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M66,20 H102 V34 H66 Z M61.6,98 a4.4,4.4 0 1,0 8.8,0 a4.4,4.4 0 1,0 -8.8,0 Z M97.6,98 a4.4,4.4 0 1,0 8.8,0 a4.4,4.4 0 1,0 -8.8,0 Z" />
+        <path
+            android:pathData="M73,108 Q78.5,114 84,108 Q89.5,114 95,108"
+            android:strokeColor="#000000"
+            android:strokeLineCap="round"
+            android:strokeWidth="4" />
+    </group>
+</vector>

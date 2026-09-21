@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Water-tracker_v1"
+rootProject.name = "WaterTracker"
 include(":app")
