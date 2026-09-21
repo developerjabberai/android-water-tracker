@@ -70,7 +70,7 @@ fun WelcomeScreen(onDone: () -> Unit) {
     ) {
         Image(preview, contentDescription = "Widget preview", modifier = Modifier.size(220.dp))
         Text(
-            "Purrsip",
+            "Water Tracker",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Ink,
@@ -98,7 +98,7 @@ fun WelcomeScreen(onDone: () -> Unit) {
             )
         } else {
             Text(
-                "Long-press an empty spot on your home screen, tap Widgets, then drag out Purrsip.",
+                "Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.",
                 color = Ink,
                 textAlign = TextAlign.Center,
             )

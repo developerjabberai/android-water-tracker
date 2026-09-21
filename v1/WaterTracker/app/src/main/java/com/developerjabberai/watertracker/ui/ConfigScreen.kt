@@ -77,7 +77,7 @@ fun ConfigScreen() {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Purrsip", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
+        Text("Water Tracker", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
         Text("The widget is the app. Set it up here, then tap it on your home screen.", color = Ink.copy(alpha = 0.7f))
 
         Section("Home screen widget") {
@@ -89,7 +89,7 @@ fun ConfigScreen() {
                     colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 ) { Text("Add widget to home screen", fontWeight = FontWeight.Bold) }
             } else {
-                Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Purrsip.")
+                Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.")
             }
         }
 

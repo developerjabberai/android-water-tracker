@@ -1,10 +1,11 @@
 # Play Store listing
 
-**App name (30):** Purrsip: Water Tracker Widget
+**App name / Play title (30):** Widget: Water Tracker & Remind
+**In-app and home-screen name:** Water Tracker
 **Short description (80):** Water tracker widget: log water in one tap. A little cat cheers you on.
 
 **Full description (4000):**
-Purrsip is a water tracker widget for your home screen, and the widget is the whole app.
+Water Tracker is a water tracker widget for your home screen, and the widget is the whole app.
 
 Tap it to log water. The bottle fills up with a splash and does a happy little bounce. Every day a different cat-bottle character keeps you company, and a creeper vine grows up the bottle every day you reach your goal.
 
@@ -23,15 +24,15 @@ Add the widget to your home screen in one tap from the app, pick your daily goal
 A NOTE ON PERMISSIONS
 To notice when you unlock your phone, the widget uses a small background service. It shows one quiet, low-priority notification ("Watching your pace") that you can hide. Nothing about your unlocks is stored or sent anywhere.
 
-Purrsip is not a medical app and gives no medical advice.
+Water Tracker is not a medical app and gives no medical advice.
 
 **Category:** Health & Fitness
 **Tags:** water tracker, hydration, widget, drink water reminder, habit tracker
 
 **What's new (1.0.0):** First release. One-tap water logging from your home screen, four daily characters, a growing creeper streak, and an unmissable unlock reminder.
 
-**Localised titles** (Play Console > Store listing > Translations; keep "Purrsip" identical):
-- de: Purrsip: Wasser Tracker Widget
-- fr: Purrsip: Rappel Eau Widget
-- es: Purrsip: Recordatorio de Agua
-- it: Purrsip: Promemoria Acqua
+**Localised titles** (Play Console > Store listing > Translations; all 30 characters or fewer):
+- de: Widget: Wasser Erinnerung
+- fr: Widget: Rappel Eau & Suivi
+- es: Widget: Agua y Recordatorio
+- it: Widget: Acqua e Promemoria

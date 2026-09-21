@@ -1,4 +1,4 @@
-# Purrsip (Play title: "Purrsip: Water Tracker Widget"): v1 Spec
+# Water Tracker (Play title: "Widget: Water Tracker & Remind"): v1 Spec
 
 ## Platform
 - Android only, minimum Android 12 (API 31)

@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Purrsip: Water Tracker Widget" · version 1.0.0 (code 1) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.0 (code 1) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
@@ -26,7 +26,7 @@ App ID `com.developerjabberai.watertracker` · Title "Purrsip: Water Tracker Wid
 | **Data safety** | *Does the app collect or share any of the required user data types?* **No.** The app requests no internet permission and stores everything on-device. Encrypted in transit: not applicable. Data deletion: not applicable (nothing collected). Note Android Auto Backup of a small settings file goes to the user's own Google account, not to the developer, so it is not "collection" |
 | **Government app** | No |
 | **Financial features** | None |
-| **Health apps declaration** | Purrsip logs water intake only. Pick the closest category (Nutrition & weight management or "other health and fitness"), state that it makes **no medical claims**, has no health-data integration (no Health Connect) and is not a medical device |
+| **Health apps declaration** | Water Tracker logs water intake only. Pick the closest category (Nutrition & weight management or "other health and fitness"), state that it makes **no medical claims**, has no health-data integration (no Health Connect) and is not a medical device |
 | **Advertising ID** | The app does not use it (answer "No") |
 
 ## 4. Foreground service declaration (App content > Foreground service permissions)
@@ -51,6 +51,6 @@ No location, contacts, storage, camera, microphone or internet permissions.
 
 ## 7. Before you press submit
 - [ ] Replace `<your-support-email>` in `v1/store/listing.md` (the email field in Play Console is separate and required)
-- [ ] Trademark search for "Purrsip" (USPTO, EUIPO, UK IPO)
+- [ ] Name: "Water Tracker" is a generic phrase, so it can't be trademarked and there is nothing to register or search. Anyone can use it, and it is very crowded in the store. Your icon, screenshots and characters are what set the app apart
 - [ ] Confirm your Recraft plan allows commercial use of the four character illustrations
 - [ ] Turn on GitHub Pages so the privacy policy URL above works (Settings > Pages > deploy from `main` / `docs`)

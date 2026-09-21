@@ -42,7 +42,7 @@ class UnlockService : Service() {
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val notification = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_water)
-            .setContentTitle("Purrsip")
+            .setContentTitle("Water Tracker")
             .setContentText("Watching your pace")
             .setContentIntent(open)
             .setOngoing(true)
