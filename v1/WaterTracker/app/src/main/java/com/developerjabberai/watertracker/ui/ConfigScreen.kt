@@ -8,6 +8,7 @@ import com.developerjabberai.watertracker.widget.Frame
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -48,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.developerjabberai.watertracker.data.WaterStore
+import com.developerjabberai.watertracker.domain.Creeper
 import com.developerjabberai.watertracker.widget.WaterWidgetProvider
 import java.time.format.TextStyle
 import java.util.Locale
@@ -90,6 +93,21 @@ fun ConfigScreen() {
             }
         }
 
+        Section("Your creeper") {
+            val level = remember { store.creeperLevel() }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                for (i in 1..Creeper.MAX) {
+                    Box(
+                        Modifier
+                            .size(if (i == level) 22.dp else 16.dp)
+                            .background(if (i <= level) Blue else Ink.copy(alpha = 0.12f), CircleShape),
+                    )
+                }
+            }
+            Text("Level $level of ${Creeper.MAX}: ${Creeper.name(level)}", fontWeight = FontWeight.SemiBold, color = Ink)
+            Hint("It grows a level each day you reach your goal, and shrinks a level for each day you miss.")
+        }
+
         Section("Last 7 days") { WeekChart(history, goal) }
 
         Section("Daily goal") {
@@ -124,7 +142,7 @@ private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         goals.forEach { goal ->
             // Drawn a hair under full so the goal-reached badge stays off; the widget prints the amount as the label.
-            val image = remember(goal) { BottleRenderer.render(context, goal, 0f, Frame(totalMl = goal * 0.999f)).asImageBitmap() }
+            val image = remember(goal) { BottleRenderer.render(context, goal, 0f, Frame(totalMl = goal * 0.999f, creeper = 0f)).asImageBitmap() }
             OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
                 Image(image, contentDescription = "${goal / 1000} litre goal", modifier = Modifier.fillMaxWidth())
             }

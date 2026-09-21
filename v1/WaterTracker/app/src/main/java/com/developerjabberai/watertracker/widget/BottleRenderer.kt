@@ -42,6 +42,8 @@ data class Frame(
     val sweat: Float = 0f,
     /** Which of the four characters; negative means today's pick. */
     val art: Int = -1,
+    /** Creeper growth 1..10 (may be fractional while it grows); 0 hides it; negative means the saved level. */
+    val creeper: Float = -1f,
 )
 
 /**
@@ -100,6 +102,7 @@ object BottleRenderer {
         val fill = (f.totalMl / goalMl).coerceIn(0f, 1f)
         val goalReached = f.totalMl >= goalMl
         val litres = (goalMl / 1000).coerceAtLeast(1)
+        val creeperLevel = if (f.creeper >= 0f) f.creeper else WaterStore(context).creeperLevel().toFloat()
 
         c.save()
         c.translate(cx, feetY - f.hop)
@@ -107,7 +110,9 @@ object BottleRenderer {
         c.scale(1f, f.squash)
         c.scale(s, s)
         c.translate(-(art.outline.centerX()), -art.outline.bottom)
+        CreeperRenderer.draw(c, p, art, creeperLevel, front = false)
         drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
+        CreeperRenderer.draw(c, p, art, creeperLevel, front = true)
         if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
         c.restore()
 

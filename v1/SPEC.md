@@ -27,6 +27,13 @@ The home-screen widget is the product. The app exists only for configuration and
 - **Daily reset:** midnight. An inexact alarm at 00:01 redraws the widget; unlock also rolls over a stale day, and yesterday's total is kept for the 7-day view.
 - **Out of scope for MVP:** undo.
 
+## Creeper (streak)
+- A vine winds up the bottle, with **10 growth levels**: 1 Wilted, 2 Struggling, 3 Recovering, 4 Sprout, **5 Steady (start)**, 6 Climbing, 7 Lush, 8 Budding, 9 Blooming, 10 Full bloom. Colour tells the story (brown, yellow, light green, deep green, pink flowers).
+- **Grows** one level the moment the day's goal is first reached (once per day), during the goal celebration. Partial days do not count.
+- **Shrinks** one level for each missed day, including days the app was not used, never below level 1. It stays at 10 while the streak continues.
+- It grows up behind the bottle and is redrawn over the side edges only, so it never covers the face. Sizes are relative to the bottle width, so it fits all four characters.
+- Shown in the config screen as ten dots, the level number and its name. Logic lives in `domain/Creeper.kt` (unit tested); drawing in `widget/CreeperRenderer.kt`.
+
 ## First run
 - Welcome screen with one CTA, "Add widget" (system pin-to-home dialog). The widget uses default settings until changed.
 - As soon as a widget exists the app moves to the config screen. "Skip for now" is available, and launchers that cannot pin show written steps.
@@ -51,6 +58,7 @@ The home-screen widget is the product. The app exists only for configuration and
 Commonly cited adequate total fluid intake is about 3.7 L/day for men and 2.7 L/day for women (US National Academies), including water from food. Drinking water alone is usually 2-3 L. The app lets users set their own goal and gives no medical advice.
 
 ## Decisions log
+- Creeper rules chosen by the product owner delegating the call: grows on first goal-hit each day, shrinks per missed day (idle days included), floor 1, cap 10, start 5.
 - Artwork: the four Recraft-generated SVGs are converted to JSON by `v1/design/tools/svg_to_json.py` and drawn with android.graphics.Path. Character 4 has a stray dark mark at the bottom right that is in the original artwork and was left as drawn.
 - One bottle for all goals (no two-bottle layout); litre ticks show the goal.
 - Because whiskers and ears are part of each outline shape, the character no longer turns around to a plain bottle; events are reactions (bounce, wobble, hop) instead.

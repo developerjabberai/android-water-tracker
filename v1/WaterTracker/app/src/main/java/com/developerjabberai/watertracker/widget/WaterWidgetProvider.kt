@@ -33,7 +33,8 @@ class WaterWidgetProvider : AppWidgetProvider() {
                 val from = to - store.tapMl
                 synchronized(animationLock) {
                     animateFill(context, store, from.toFloat(), to.toFloat())
-                    if (from < store.goalMl && to >= store.goalMl) celebrate(context, store, to.toFloat()) else cheer(context, store, to.toFloat())
+                    val grew = store.creditGoalIfMet()
+                    if (grew != null) celebrate(context, store, to.toFloat(), grew.first, grew.second) else cheer(context, store, to.toFloat())
                     refresh(context)
                 }
             } finally {
@@ -112,8 +113,8 @@ class WaterWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        /** One-time goal-reached: big hops with the shine and sparkles, then the check badge. */
-        private fun celebrate(context: Context, store: WaterStore, level: Float) {
+        /** Goal reached for the day: big hops with the shine and sparkles, while the creeper grows a level. */
+        private fun celebrate(context: Context, store: WaterStore, level: Float, creeperFrom: Int, creeperTo: Int) {
             val n = 48
             for (i in 1..n) {
                 val t = i / n.toFloat()
@@ -126,6 +127,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
                         celebrate = t,
                         hop = 34f * bounce * settle,
                         squash = 1f - 0.06f * (1f - bounce) * settle,
+                        creeper = creeperFrom + (creeperTo - creeperFrom) * ease(((t - 0.15f) / 0.6f).coerceIn(0f, 1f)),
                     ),
                 )
                 Thread.sleep(FRAME_MS)

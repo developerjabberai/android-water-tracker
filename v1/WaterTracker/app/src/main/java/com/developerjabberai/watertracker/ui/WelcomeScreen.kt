@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.developerjabberai.watertracker.domain.Creeper
 import com.developerjabberai.watertracker.widget.BottleRenderer
 import com.developerjabberai.watertracker.widget.Frame
 import kotlinx.coroutines.delay
@@ -41,7 +42,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun WelcomeScreen(onDone: () -> Unit) {
     val context = LocalContext.current
-    val preview = remember { BottleRenderer.render(context, 2000, 0.7f, Frame(totalMl = 1100f)).asImageBitmap() }
+    val preview = remember { BottleRenderer.render(context, 2000, 0.7f, Frame(totalMl = 1100f, creeper = Creeper.START.toFloat())).asImageBitmap() }
     var waiting by remember { mutableStateOf(false) }
     var added by remember { mutableStateOf(false) }
 

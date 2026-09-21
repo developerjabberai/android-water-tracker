@@ -2,9 +2,11 @@ package com.developerjabberai.watertracker.data
 
 import android.content.Context
 import com.developerjabberai.watertracker.domain.ArtPicker
+import com.developerjabberai.watertracker.domain.Creeper
 import com.developerjabberai.watertracker.widget.ArtLibrary
 import kotlin.random.Random
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /** Local storage. Today's total rolls over at midnight; past days are kept for the 7-day view. */
 class WaterStore(context: Context) {
@@ -46,6 +48,27 @@ class WaterStore(context: Context) {
         return ArtPicker.pick(java.time.LocalDate.now().toEpochDay(), artSalt, ArtLibrary.COUNT)
     }
 
+    /** How grown the creeper is, 1..10. Any days that have ended since it was last looked at are applied first. */
+    fun creeperLevel(): Int {
+        rollOverIfNeeded()
+        return prefs.getInt("creeper", Creeper.START).coerceIn(Creeper.MIN, Creeper.MAX)
+    }
+
+    /**
+     * Call after logging water. The first time each day the total reaches the goal, the creeper grows a level.
+     * Returns (old, new) level when that just happened, otherwise null.
+     */
+    fun creditGoalIfMet(): Pair<Int, Int>? {
+        rollOverIfNeeded()
+        val today = LocalDate.now().toString()
+        if (prefs.getInt("today", 0) < goalMl) return null
+        if (prefs.getString("creeper_credit", null) == today) return null
+        val old = creeperLevel()
+        val new = Creeper.afterGoalMet(old)
+        prefs.edit().putInt("creeper", new).putString("creeper_credit", today).apply()
+        return old to new
+    }
+
     /** Set once the first-run welcome has been completed or skipped. */
     var onboarded: Boolean
         get() = prefs.getBoolean("onboarded", false)
@@ -75,7 +98,13 @@ class WaterStore(context: Context) {
         val stored = prefs.getString("date", null)
         if (stored == today) return
         val e = prefs.edit()
-        if (stored != null) e.putInt("day_$stored", prefs.getInt("today", 0))
+        if (stored != null) {
+            e.putInt("day_$stored", prefs.getInt("today", 0))
+            val idleDays = (ChronoUnit.DAYS.between(LocalDate.parse(stored), LocalDate.now()) - 1).toInt()
+            val metThatDay = prefs.getString("creeper_credit", null) == stored
+            val level = prefs.getInt("creeper", Creeper.START)
+            e.putInt("creeper", Creeper.afterDayEnds(level, metThatDay, idleDays))
+        }
         e.putString("date", today).putInt("today", 0).putBoolean("nudge_pending", false).apply()
     }
 
