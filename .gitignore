@@ -19,3 +19,6 @@ captures/
 keystore.properties
 *.jks
 *.keystore
+
+# Demo recordings are uploaded to YouTube, not kept in git
+v1/store/video/

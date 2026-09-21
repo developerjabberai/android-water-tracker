@@ -69,6 +69,11 @@ class WaterStore(context: Context) {
         return old to new
     }
 
+    /** So we only ask for the notification permission once. */
+    var notificationsAsked: Boolean
+        get() = prefs.getBoolean("notifications_asked", false)
+        set(v) = prefs.edit().putBoolean("notifications_asked", v).apply()
+
     /** Set once the first-run welcome has been completed or skipped. */
     var onboarded: Boolean
         get() = prefs.getBoolean("onboarded", false)

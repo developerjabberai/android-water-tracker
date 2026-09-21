@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.0 (code 1) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.1 (code 2) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
@@ -33,7 +33,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 - Type: **Special use** (`FOREGROUND_SERVICE_SPECIAL_USE`, subtype text is in the manifest)
 - Where it is used: the "Watching your pace" service (`UnlockService`)
 - Justification (paste): *The home-screen widget reminds the user to drink water when they unlock their phone. Android does not deliver the unlock event (ACTION_USER_PRESENT) to a manifest-declared receiver, so a minimal foreground service keeps a runtime receiver registered for it. The service shows one minimum-priority notification, does no network or heavy work, and stores nothing about unlocks.*
-- Demo video (recommended for review): a 20–30 second screen recording: lock the phone, unlock it while behind on water, and show the widget's reminder animation, then open the notification shade to show the quiet "Watching your pace" notification.
+- Demo video: `v1/store/video/foreground-service-demo.mp4` (about 30 seconds, captioned). Upload it to YouTube as **Unlisted** and paste the link in the declaration. It shows the widget, the quiet "Watching your pace" notification, locking and unlocking the phone, and the widget's reminder.
 - Fallback if this is rejected: replace the unlock listener with a periodic (about 15 minute) check, which needs no foreground service.
 
 ## 5. Permissions summary (for your own reference)
@@ -41,13 +41,14 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 |---|---|
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE` | The unlock listener above |
 | `RECEIVE_BOOT_COMPLETED` | Restart that listener after a reboot |
+| `POST_NOTIFICATIONS` | Lets Android show the service's quiet "Watching your pace" notification (asked once, after the welcome; optional) |
 No location, contacts, storage, camera, microphone or internet permissions.
 
 ## 6. Release
 1. **Internal testing** first: create a release, upload the `.aab`, add your own Google account as a tester, install the Play-signed build on your phone and check the widget, the reminder and the creeper.
 2. Then **Production**: create the release, use the "What's new" text from `listing.md`, roll out to 100%, submit for review.
 3. Keep **Play App Signing** on (default). Your `.jks` is only the upload key: keep it and its passwords safe and backed up.
-4. Bump `versionCode` in `v1/WaterTracker/app/build.gradle.kts` for every later upload.
+4. Bump `versionCode` in `v1/WaterTracker/app/build.gradle.kts` for every upload. Play rejects a version code it has already seen (this is why the bundle is now code 2).
 
 ## 7. Before you press submit
 - [ ] Replace `<your-support-email>` in `v1/store/listing.md` (the email field in Play Console is separate and required)

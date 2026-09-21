@@ -39,6 +39,13 @@ class UnlockService : Service() {
                 setShowBadge(false)
             },
         )
+        showForeground()
+        registerReceiver(unlockReceiver, IntentFilter(Intent.ACTION_USER_PRESENT))
+        MidnightReceiver.schedule(this)
+    }
+
+    /** Also called on every start, so the notification appears as soon as the user allows notifications. */
+    private fun showForeground() {
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val notification = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_water)
@@ -53,11 +60,12 @@ class UnlockService : Service() {
         } else {
             startForeground(ID, notification)
         }
-        registerReceiver(unlockReceiver, IntentFilter(Intent.ACTION_USER_PRESENT))
-        MidnightReceiver.schedule(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        showForeground()
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         unregisterReceiver(unlockReceiver)

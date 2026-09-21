@@ -11,6 +11,7 @@ Water Tracker is a home-screen widget that helps you log the water you drink.
 **Permissions and why:**
 - *Foreground service:* used only so the widget can notice when you unlock your phone and remind you to drink. It shows a quiet, minimum-priority notification. Nothing about your unlocks is stored or sent anywhere.
 - *Run at startup:* restores that listener after your phone restarts.
+- *Notifications:* lets the app show its quiet "Watching your pace" notification. This is optional. If you decline, the app still works, but Android hides that notification.
 
 **Deleting your data:** uninstalling the app removes everything it stored on your device.
 
