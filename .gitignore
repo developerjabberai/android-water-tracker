@@ -1,0 +1,16 @@
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+# IDE
+.idea/
+*.iml
+# macOS
+.DS_Store
+# Claude
+.claude/
