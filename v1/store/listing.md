@@ -1,10 +1,10 @@
 # Play Store listing (drafts)
 
-**App name (30):** Water Tracker
-**Short description (80):** Log water with one tap from your home screen. A little cat cheers you on.
+**App name (30):** Purrsip: Water Tracker Widget
+**Short description (80):** Water tracker widget: log water in one tap. A little cat cheers you on.
 
 **Full description (4000):**
-Water Tracker is a home-screen widget, and the widget is the whole app.
+Purrsip is a water tracker widget for your home screen, and the widget is the whole app.
 
 Tap it to log water. A sticker-style bottle fills up with a splash, then turns around to show a little cat that reacts to how you're doing.
 
@@ -20,8 +20,14 @@ Add the widget from the app in one tap, then set your goal and how much a tap lo
 
 Note: to notice when you unlock your phone, the widget uses a small background service with a quiet, low-priority notification.
 
-Water Tracker is not a medical app and gives no medical advice.
+Purrsip is not a medical app and gives no medical advice.
 
 **Category:** Health & Fitness
-**Tags:** water, hydration, widget, habit tracker
+**Tags:** water tracker, hydration, widget, drink water reminder, habit tracker
+
+**Localised titles (set per language in Play Console, keep "Purrsip" identical):**
+- de: Purrsip: Wasser Tracker Widget
+- fr: Purrsip: Rappel Eau Widget
+- es: Purrsip: Recordatorio de Agua
+- it: Purrsip: Promemoria Acqua
 **Contact email:** <your-support-email>

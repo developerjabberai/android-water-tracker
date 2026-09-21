@@ -1,4 +1,4 @@
-# Releasing Water Tracker to Google Play
+# Releasing Purrsip to Google Play
 
 App ID (permanent once uploaded): `com.developerjabberai.watertracker`
 
@@ -30,7 +30,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 Upload `app/build/outputs/bundle/release/app-release.aab`. Bump `versionCode` in `app/build.gradle.kts` for every new upload.
 
 ## Play Console checklist
-1. Create app: name "Water Tracker", default language, App (not game), Free.
+1. Create app: title "Purrsip: Water Tracker Widget" (home-screen label "Purrsip"), default language, App (not game), Free.
 2. **Store listing:** text in `v1/store/listing.md`; assets in `v1/store/` (icon 512x512, feature graphic 1024x500, phone screenshots).
 3. **Privacy policy URL:** host `v1/store/privacy-policy.md` (for example GitHub Pages) and paste the link.
 4. **App content:** data safety (no data collected or shared; everything stays on the device), content rating questionnaire, target audience (13+ or all ages, not aimed at children), ads (none), health apps declaration (see note below).
