@@ -5,9 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import kotlin.math.PI
 import kotlin.math.sin
@@ -41,10 +43,11 @@ object BottleRenderer {
      * @param waveAmp  0..1 wave strength, decays after a tap
      * @param nudge    0..1 how strongly to highlight the gap to the target (0 = normal)
      * @param lineProgress 0..1 how much of the dotted target line is drawn (left to right)
+     * @param celebrate 0..1 progress of the goal-reached shine and sparkles (negative = off)
      * @param preview  0..1 how far translucent "preview" water has risen from the current level to the target
      */
     fun render(context: Context, totalMl: Float, goalMl: Int, paceFrac: Float, phase: Float, waveAmp: Float, nudge: Float = 0f,
-        lineProgress: Float = 1f, preview: Float = 0f,
+        lineProgress: Float = 1f, preview: Float = 0f, celebrate: Float = -1f,
     ): Bitmap {
         loadFont(context)
         val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
@@ -77,11 +80,68 @@ object BottleRenderer {
             p.style = Paint.Style.STROKE; p.strokeWidth = 7f; p.color = GLASS
             c.drawPath(bottle, p)
 
-            drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap, nudge, lineProgress, preview, phase)
+            if (totalMl < goalMl) drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap, nudge, lineProgress, preview, phase)
         }
 
+        if (celebrate in 0f..1f) drawCelebration(c, p, celebrate, bottles, gap, top, bottom, bodyW)
+        if (totalMl >= goalMl) drawGoalBadge(c, p)
         drawAmount(c, p, totalMl)
         return bmp
+    }
+
+    /** A soft diagonal shine sweeps across each bottle, then sparkles pop around them. */
+    private fun drawCelebration(c: Canvas, p: Paint, t: Float, bottles: Int, gap: Float, top: Float, bottom: Float, bodyW: Float) {
+        val sweep = (t / 0.55f).coerceIn(0f, 1f)
+        if (sweep < 1f) {
+            for (i in 0 until bottles) {
+                val cx = gap * (i + 1)
+                c.save()
+                c.clipPath(bottlePath(cx, top, bottom, bodyW))
+                val x = cx - bodyW + (bodyW * 2.2f) * sweep
+                p.style = Paint.Style.FILL
+                p.shader = LinearGradient(
+                    x - 40f, 0f, x + 40f, 0f,
+                    intArrayOf(Color.TRANSPARENT, Color.argb(170, 255, 255, 255), Color.TRANSPARENT),
+                    null, Shader.TileMode.CLAMP,
+                )
+                c.drawRect(cx - bodyW, top, cx + bodyW, bottom, p)
+                p.shader = null
+                c.restore()
+            }
+        }
+        // (x, y as fractions of the widget, start offset in 0..0.5)
+        val sparkles = listOf(
+            Triple(0.14f, 0.20f, 0.10f), Triple(0.86f, 0.24f, 0.22f), Triple(0.22f, 0.62f, 0.32f),
+            Triple(0.80f, 0.58f, 0.05f), Triple(0.50f, 0.10f, 0.28f), Triple(0.92f, 0.44f, 0.40f),
+            Triple(0.08f, 0.42f, 0.18f),
+        )
+        p.style = Paint.Style.FILL; p.color = WATER
+        for ((fx, fy, start) in sparkles) {
+            val local = ((t - start) / 0.5f).coerceIn(0f, 1f)
+            if (local <= 0f || local >= 1f) continue
+            val r = 26f * sin(local * PI.toFloat())
+            p.alpha = (255 * sin(local * PI.toFloat())).toInt()
+            val cx = fx * SIZE
+            val cy = fy * SIZE - 12f * local
+            val star = Path().apply {
+                moveTo(cx, cy - r); quadTo(cx, cy, cx + r, cy); quadTo(cx, cy, cx, cy + r)
+                quadTo(cx, cy, cx - r, cy); quadTo(cx, cy, cx, cy - r); close()
+            }
+            c.drawPath(star, p)
+        }
+        p.alpha = 255
+    }
+
+    /** Small check badge in the corner once the goal is reached. */
+    private fun drawGoalBadge(c: Canvas, p: Paint) {
+        val cx = SIZE - 52f
+        val cy = 52f
+        p.style = Paint.Style.FILL; p.color = WATER
+        c.drawCircle(cx, cy, 30f, p)
+        p.style = Paint.Style.STROKE; p.color = Color.WHITE; p.strokeWidth = 7f
+        p.strokeCap = Paint.Cap.ROUND; p.strokeJoin = Paint.Join.ROUND
+        c.drawPath(Path().apply { moveTo(cx - 12f, cy + 1f); lineTo(cx - 3f, cy + 10f); lineTo(cx + 13f, cy - 9f) }, p)
+        p.strokeCap = Paint.Cap.BUTT; p.strokeJoin = Paint.Join.MITER
     }
 
     /** Big number with a smaller unit: "1.5 L", or "750 ml" below one litre. */

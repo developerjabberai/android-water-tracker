@@ -45,6 +45,10 @@
         </receiver>
 
         <receiver
+            android:name=".service.MidnightReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".widget.WaterWidgetProvider"
             android:exported="false">
             <intent-filter>

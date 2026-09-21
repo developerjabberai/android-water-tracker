@@ -29,6 +29,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
                 val from = store.todayMl().toFloat()
                 val to = store.addTap().toFloat()
                 animateFill(context, store, from, to)
+                if (from < store.goalMl && to >= store.goalMl) celebrate(context, store, to)
             } finally {
                 pending.finish()
             }
@@ -40,6 +41,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
         private const val FILL_FRAMES = 16
         private const val FRAME_MS = 45L
         private const val PULSE_FRAMES = 64
+        private const val CELEBRATE_FRAMES = 44
         private const val NUDGE_REST = 0.6f
 
         private fun ids(context: Context): Pair<AppWidgetManager, IntArray> {
@@ -73,6 +75,15 @@ class WaterWidgetProvider : AppWidgetProvider() {
             push(context, store, level, 0f, 0f, NUDGE_REST)
         }
 
+        /** One-time goal-reached shine and sparkles (about 2 s), then the resting badge state. */
+        private fun celebrate(context: Context, store: WaterStore, level: Float) {
+            for (i in 1..CELEBRATE_FRAMES) {
+                push(context, store, level, 0f, 0f, 0f, celebrate = i / CELEBRATE_FRAMES.toFloat())
+                Thread.sleep(FRAME_MS)
+            }
+            push(context, store, level, 0f, 0f, 0f)
+        }
+
         private fun restingNudge(store: WaterStore) = if (store.nudgePending) NUDGE_REST else 0f
 
         /** Frame-sequence animation: water eases up while the wave settles. */
@@ -88,12 +99,12 @@ class WaterWidgetProvider : AppWidgetProvider() {
 
         private fun push(
             context: Context, store: WaterStore, level: Float, phase: Float, waveAmp: Float, nudge: Float,
-            lineProgress: Float = 1f, preview: Float = 0f,
+            lineProgress: Float = 1f, preview: Float = 0f, celebrate: Float = -1f,
         ) {
             val (manager, ids) = ids(context)
             if (ids.isEmpty()) return
             val pace = Pace.fraction(LocalTime.now(), store.wake, store.sleep)
-            val bmp = BottleRenderer.render(context, level, store.goalMl, pace, phase, waveAmp, nudge, lineProgress, preview)
+            val bmp = BottleRenderer.render(context, level, store.goalMl, pace, phase, waveAmp, nudge, lineProgress, preview, celebrate)
             val views = RemoteViews(context.packageName, R.layout.widget_water).apply {
                 setImageViewBitmap(R.id.widget_image, bmp)
                 val tap = Intent(context, WaterWidgetProvider::class.java).setAction(ACTION_TAP)

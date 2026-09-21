@@ -54,6 +54,7 @@ class UnlockService : Service() {
             startForeground(ID, notification)
         }
         registerReceiver(unlockReceiver, IntentFilter(Intent.ACTION_USER_PRESENT))
+        MidnightReceiver.schedule(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY

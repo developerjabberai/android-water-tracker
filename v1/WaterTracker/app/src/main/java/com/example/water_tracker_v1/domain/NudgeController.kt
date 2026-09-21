@@ -18,10 +18,8 @@ object NudgeController {
         val behind = Pace.fraction(now, store.wake, store.sleep) * store.goalMl - total
 
         if (!awake || total >= store.goalMl || behind < store.nudgeMl) {
-            if (store.nudgePending) {
-                store.nudgePending = false
-                WaterWidgetProvider.refresh(context)
-            }
+            store.nudgePending = false
+            WaterWidgetProvider.refresh(context)
             return
         }
 
