@@ -20,6 +20,8 @@ object BottleRenderer {
     private val WATER = Color.parseColor("#2E9BF0")
     private val WATER_BACK = Color.parseColor("#7CC3F7")
     private val TEXT = Color.parseColor("#12324A")
+    private val ROUNDED_BOLD: Typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD)
+    private val ROUNDED_MEDIUM: Typeface = Typeface.create("sans-serif-rounded", Typeface.NORMAL)
 
     /**
      * @param totalMl  amount to draw (may be mid-animation)
@@ -54,11 +56,30 @@ object BottleRenderer {
             drawGhostLevel(c, p, bottle, cx, top, bottom, bodyW, fill, (paceFrac * goalMl - i * cap) / cap)
         }
 
-        p.style = Paint.Style.FILL; p.color = TEXT
-        p.textAlign = Paint.Align.CENTER; p.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        p.textSize = 56f
-        c.drawText("${totalMl.toInt()} ml", SIZE / 2f, SIZE - 36f, p)
+        drawAmount(c, p, totalMl)
         return bmp
+    }
+
+    /** Big number with a smaller unit: "1.5 L", or "750 ml" below one litre. */
+    private fun drawAmount(c: Canvas, p: Paint, totalMl: Float) {
+        val (number, unit) = if (totalMl >= 1000f) {
+            "%.2f".format(totalMl / 1000f).trimEnd('0').trimEnd('.') to "L"
+        } else {
+            totalMl.toInt().toString() to "ml"
+        }
+        p.style = Paint.Style.FILL; p.color = TEXT; p.textAlign = Paint.Align.LEFT
+        p.typeface = ROUNDED_BOLD; p.textSize = 66f
+        val numW = p.measureText(number)
+        p.typeface = ROUNDED_BOLD; p.textSize = 42f
+        val unitW = p.measureText(unit)
+        val gap = 8f
+        val x = (SIZE - (numW + gap + unitW)) / 2f
+        val baseline = SIZE - 30f
+        p.typeface = ROUNDED_BOLD; p.textSize = 66f
+        c.drawText(number, x, baseline, p)
+        p.typeface = ROUNDED_BOLD; p.textSize = 42f; p.alpha = 170
+        c.drawText(unit, x + numW + gap, baseline, p)
+        p.alpha = 255
     }
 
     /** Faint dotted line where the water should be by now, with a soft band showing the gap when behind. */

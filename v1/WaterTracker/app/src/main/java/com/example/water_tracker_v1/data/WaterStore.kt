@@ -13,7 +13,7 @@ class WaterStore(context: Context) {
         set(v) = prefs.edit().putInt("goal", v).apply()
 
     var glassMl: Int
-        get() = prefs.getInt("glass", 250)
+        get() = prefs.getInt("glass", 200)
         set(v) = prefs.edit().putInt("glass", v).apply()
 
     var wake: LocalTime
@@ -26,7 +26,7 @@ class WaterStore(context: Context) {
 
     /** How far behind pace (ml) before the widget nudges. */
     var nudgeMl: Int
-        get() = prefs.getInt("nudge", 125)
+        get() = prefs.getInt("nudge", 100)
         set(v) = prefs.edit().putInt("nudge", v).apply()
 
     val tapMl: Int get() = glassMl / 2

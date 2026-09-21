@@ -5,6 +5,16 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,8 +90,8 @@ fun ConfigScreen() {
         }
 
         Section("Glass size") {
-            Chips(listOf(200, 250, 300, 350), glass, { "$it ml" }) { glass = it; store.glassMl = it; changed() }
-            Hint("One tap on the widget logs half a glass: ${glass / 2} ml")
+            GlassPicker(listOf(200, 300, 400), glass) { glass = it; store.glassMl = it; changed() }
+            Hint("One tap on the widget = half a glass = ${glass / 2} ml")
         }
 
         Section("Waking hours") {
@@ -93,7 +103,7 @@ fun ConfigScreen() {
         }
 
         Section("Nudge me when I'm behind by") {
-            Chips(listOf(125, 250, 375), nudge, { "$it ml" }) { nudge = it; store.nudgeMl = it }
+            Chips(listOf(100, 200, 300), nudge, { "$it ml" }) { nudge = it; store.nudgeMl = it }
             Hint("The widget pulses when you unlock your phone and you're this far behind")
         }
 
@@ -119,6 +129,53 @@ private fun Section(title: String, content: @Composable () -> Unit) {
             Text(title, fontWeight = FontWeight.SemiBold, color = Ink)
             content()
         }
+    }
+}
+
+/** Tumbler drawings scaled to real size, filled to the half a single tap adds. */
+@Composable
+private fun GlassPicker(sizes: List<Int>, selected: Int, onPick: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        sizes.forEach { ml ->
+            val on = ml == selected
+            Column(
+                Modifier
+                    .weight(1f)
+                    .background(if (on) Blue.copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(16.dp))
+                    .border(if (on) 2.dp else 1.dp, if (on) Blue else Ink.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                    .clickable { onPick(ml) }
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Box(Modifier.height(96.dp), contentAlignment = Alignment.BottomCenter) {
+                    Glass(heightDp = 48 + (ml - 200) * 24 / 100)
+                }
+                Text("$ml ml", fontWeight = FontWeight.SemiBold, color = Ink)
+                Text("1 tap = ${ml / 2} ml", style = MaterialTheme.typography.labelSmall, color = Ink.copy(alpha = 0.65f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun Glass(heightDp: Int) {
+    Canvas(Modifier.width((heightDp * 0.72f).dp).height(heightDp.dp)) {
+        val w = size.width
+        val h = size.height
+        val inset = w * 0.14f
+        val glass = Path().apply {
+            moveTo(0f, 0f); lineTo(w, 0f); lineTo(w - inset, h); lineTo(inset, h); close()
+        }
+        // Water up to the half-way mark: exactly what one tap adds.
+        clipPath(glass) {
+            drawRect(Blue.copy(alpha = 0.85f), topLeft = Offset(0f, h / 2), size = Size(w, h / 2))
+        }
+        drawPath(glass, Ink.copy(alpha = 0.35f), style = Stroke(width = 3.dp.toPx()))
+        drawLine(
+            Ink.copy(alpha = 0.5f), Offset(0f, h / 2), Offset(w, h / 2), strokeWidth = 1.5.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f)),
+        )
     }
 }
 
