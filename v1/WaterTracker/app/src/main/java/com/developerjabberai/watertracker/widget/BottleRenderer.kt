@@ -44,6 +44,19 @@ data class Frame(
     val art: Int = -1,
     /** Creeper growth 1..10 (may be fractional while it grows); 0 hides it; negative means the saved level. */
     val creeper: Float = -1f,
+    /** Progress 0..1 of the blast: shockwave rings and a burst of pieces that flies out and is pulled back. Negative = off. */
+    val blast: Float = -1f,
+    /** Progress 0..1 of a single ping ring around the bottle. Negative = off. */
+    val ring: Float = -1f,
+    /** 0..1 strength of a colour flash over the whole card. */
+    val flash: Float = 0f,
+    val flashColor: Int = Color.WHITE,
+    /** Size of the character (1 = normal), grown from the feet. */
+    val scale: Float = 1f,
+    /** 0..1 how visible the character is; 0 while it is blasted apart. */
+    val opacity: Float = 1f,
+    /** Sideways shake in pixels. */
+    val shakeX: Float = 0f,
 )
 
 /**
@@ -84,8 +97,14 @@ object BottleRenderer {
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
+        val card = RectF(0f, 0f, SIZE.toFloat(), SIZE.toFloat())
         p.color = BG
-        c.drawRoundRect(RectF(0f, 0f, SIZE.toFloat(), SIZE.toFloat()), 70f, 70f, p)
+        c.drawRoundRect(card, 70f, 70f, p)
+        if (f.flash > 0f) {
+            p.color = f.flashColor; p.alpha = (255 * f.flash.coerceIn(0f, 1f)).toInt()
+            c.drawRoundRect(card, 70f, 70f, p)
+            p.alpha = 255
+        }
 
         val art = ArtLibrary.get(context, if (f.art >= 0) f.art else WaterStore(context).artToday())
         val s = min(ART_MAX_W / art.outline.width(), ART_MAX_H / art.outline.height())
@@ -104,17 +123,27 @@ object BottleRenderer {
         val litres = (goalMl / 1000).coerceAtLeast(1)
         val creeperLevel = if (f.creeper >= 0f) f.creeper else WaterStore(context).creeperLevel().toFloat()
 
-        c.save()
-        c.translate(cx, feetY - f.hop)
-        c.rotate(f.rotate)
-        c.scale(1f, f.squash)
-        c.scale(s, s)
-        c.translate(-(art.outline.centerX()), -art.outline.bottom)
-        CreeperRenderer.draw(c, p, art, creeperLevel, front = false)
-        drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
-        CreeperRenderer.draw(c, p, art, creeperLevel, front = true)
-        if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
-        c.restore()
+        val centerY = feetY - art.outline.height() * s * 0.45f
+        if (f.blast in 0f..1f) drawShockwave(c, p, cx + f.shakeX, centerY, f.blast)
+        if (f.ring in 0f..1f) drawPing(c, p, cx, centerY, f.ring)
+
+        if (f.opacity > 0f) {
+            val layer = c.saveLayerAlpha(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), (255 * f.opacity.coerceIn(0f, 1f)).toInt())
+            c.save()
+            c.translate(cx + f.shakeX, feetY - f.hop)
+            c.rotate(f.rotate)
+            c.scale(f.scale, f.scale)
+            c.scale(1f, f.squash)
+            c.scale(s, s)
+            c.translate(-(art.outline.centerX()), -art.outline.bottom)
+            CreeperRenderer.draw(c, p, art, creeperLevel, front = false)
+            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
+            CreeperRenderer.draw(c, p, art, creeperLevel, front = true)
+            if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
+            c.restore()
+            c.restoreToCount(layer)
+        }
+        if (f.blast in 0f..1f) drawPieces(c, p, cx + f.shakeX, centerY, f.blast)
 
         if (f.sparkle in 0f..1f) drawSparkles(c, p, f.sparkle, small = true)
         if (f.celebrate in 0f..1f) drawSparkles(c, p, f.celebrate, small = false)
@@ -122,6 +151,64 @@ object BottleRenderer {
 
         drawAmount(c, p, f.totalMl)
         return bmp
+    }
+
+    /** Two expanding rings, like a shockwave. */
+    private fun drawShockwave(c: Canvas, p: Paint, x: Float, y: Float, b: Float) {
+        p.style = Paint.Style.STROKE; p.shader = null; p.pathEffect = null
+        for ((delay, color) in listOf(0f to Color.WHITE, 0.16f to Color.parseColor("#FF6F91"))) {
+            val t = ((b - delay) / (1f - delay)).coerceIn(0f, 1f)
+            if (t <= 0f || t >= 1f) continue
+            p.strokeWidth = 30f * (1f - t) + 4f
+            p.color = color; p.alpha = (255 * (1f - t)).toInt()
+            c.drawCircle(x, y, 40f + 250f * t, p)
+        }
+        p.alpha = 255
+    }
+
+    /** A single soft ring that pings outward, to draw the eye again and again. */
+    private fun drawPing(c: Canvas, p: Paint, x: Float, y: Float, t: Float) {
+        p.style = Paint.Style.STROKE; p.shader = null; p.pathEffect = null
+        p.strokeWidth = 14f * (1f - t) + 3f
+        p.color = Color.WHITE; p.alpha = (230 * (1f - t)).toInt()
+        c.drawCircle(x, y, 60f + 170f * t, p)
+        p.alpha = 255
+    }
+
+    private class Piece(val angle: Double, val speed: Float, val size: Float, val kind: Int)
+
+    private val pieces: List<Piece> = kotlin.random.Random(7).let { r ->
+        List(34) { i -> Piece(i * (2 * PI / 34) + r.nextDouble(-0.12, 0.12), r.nextFloat() * 110f + 110f, r.nextFloat() * 8f + 6f, i % 4) }
+    }
+
+    /** The bottle bursts into droplets, sparkles, leaves and petals that fly out, then are pulled back in. */
+    private fun drawPieces(c: Canvas, p: Paint, x: Float, y: Float, b: Float) {
+        val out = Math.pow(sin(PI * b), 0.8).toFloat()      // out and back
+        val fade = 1f - ((b - 0.85f) / 0.15f).coerceIn(0f, 1f)
+        for (piece in pieces) {
+            val px = x + (kotlin.math.cos(piece.angle) * piece.speed * out).toFloat()
+            val py = y + (sin(piece.angle) * piece.speed * out).toFloat()
+            val r = piece.size * (0.6f + 0.6f * out)
+            p.shader = null
+            p.alpha = (255 * fade).toInt()
+            when (piece.kind) {
+                0 -> { p.style = Paint.Style.FILL; p.color = WATER_LIGHT; c.drawCircle(px, py, r, p)
+                       p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = INK; c.drawCircle(px, py, r, p) }
+                1 -> { val star = Path().apply {
+                           moveTo(px, py - r * 1.7f); quadTo(px, py, px + r * 1.7f, py); quadTo(px, py, px, py + r * 1.7f)
+                           quadTo(px, py, px - r * 1.7f, py); quadTo(px, py, px, py - r * 1.7f); close() }
+                       p.style = Paint.Style.FILL; p.color = Color.WHITE; c.drawPath(star, p)
+                       p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = INK; c.drawPath(star, p) }
+                2 -> { p.style = Paint.Style.FILL; p.color = Color.parseColor("#5CC46B")
+                       c.save(); c.rotate((piece.angle * 57.3).toFloat(), px, py)
+                       c.drawOval(RectF(px - r * 1.5f, py - r * 0.8f, px + r * 1.5f, py + r * 0.8f), p)
+                       p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = INK
+                       c.drawOval(RectF(px - r * 1.5f, py - r * 0.8f, px + r * 1.5f, py + r * 0.8f), p); c.restore() }
+                else -> { p.style = Paint.Style.FILL; p.color = Color.parseColor("#FF6F91"); c.drawCircle(px, py, r * 0.9f, p)
+                          p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = INK; c.drawCircle(px, py, r * 0.9f, p) }
+            }
+        }
+        p.alpha = 255
     }
 
     /** Water sits between the body's bottom and just below its top. */

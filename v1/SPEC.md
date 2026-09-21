@@ -12,14 +12,14 @@ The home-screen widget is the product. The app exists only for configuration and
 - **Look:** one bottle for every goal, drawn from four character illustrations (`v1/design/expressions/expression-*.svg`) on a warm yellow card, with Nunito numbers. The character stays visible at rest; its outline, face and gloss are used exactly as drawn, and our own water replaces its blue body and rises with what you've drunk.
 - **Daily character:** one of the four is picked at random each day. Every block of four days shows each character once in shuffled order, never the same one two days running, and the order differs per phone.
 - **Goals:** all goals use the same bottle. Litre tick marks on the body tell 2 L (1 tick), 3 L (2 ticks) and 4 L (3 ticks) apart.
-- **Reactions (same for every character and goal):** tap = water rises with a wave, then a happy bounce with sparkles. Unlock nudge = the character wobbles, the dotted target line draws and translucent water rises to it, then drains as a sweat drop appears. Goal reached = big hops with a shine sweep and sparkles, then a check badge.
+- **Reactions (same for every character and goal):** tap = water rises with a wave, then a happy bounce with sparkles. Unlock nudge = "blast and rebuild" (about 6.5 s): the character shakes and the card flashes, then bursts into droplets, sparkles and leaves with shockwave rings, the pieces are pulled back as the bottle re-forms with a bounce (the water and number refill), then the dotted target line draws, translucent water rises to it and drains as a sweat drop appears, with ping rings and wobbles repeating. Goal reached = big hops with a shine sweep and sparkles, then a check badge.
 - **Tap:** one tap logs half a glass (100 ml) by default, or a whole glass (200 ml) if the user picks that. A glass is 200 ml.
 - **Fill animation:** water rises to the new level on tap, then the cat turns around briefly. Animation polish is a top priority. Approach: frame-sequence bitmap updates, since widgets can't run arbitrary animations.
 - **Goal display** (goal options: 2 L, 3 L, 4 L): one bottle for all of them (see Look).
 - **Pace marker:** shows how much the user should have drunk by now. It follows a front-loaded curve (rises faster in the morning and afternoon, flattens toward bedtime), running between the wake and sleep times.
 - **Nudge:** the reminder is widget-only, with no notifications.
   - Fires when the user is behind pace by more than a threshold (default: half a glass)
-  - Detected on unlock (ACTION_USER_PRESENT) by a minimum-priority foreground service; 10-minute cooldown between pulses; only within waking hours
+  - Detected on unlock (ACTION_USER_PRESENT) by a minimum-priority foreground service; 3-minute cooldown between pulses; only within waking hours
   - Pulse animation on unlock, then a resting "nudge" look (a stronger blue tint on the gap) until the user logs water
   - Shown as a pulse on the widget with the gap to the pace marker highlighted
   - If the user unlocks into another app, the nudge waits on the widget. There is no fallback notification.

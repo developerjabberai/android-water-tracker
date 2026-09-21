@@ -64,34 +64,73 @@ class WaterWidgetProvider : AppWidgetProvider() {
         }
 
         /**
-         * The reminder: the character wobbles for attention, the dotted target line draws across, translucent
-         * water rises to it (the gap to drink), then drains as a sweat drop appears. Ends in the resting nudge look.
+         * The reminder, built to be impossible to miss (about 6.5 s):
+         * charge (the character shakes and the card flashes), blast (it bursts into pieces with shockwave rings),
+         * rebuild (the pieces are pulled back as the bottle re-forms with a bounce, refilling to what you've drunk),
+         * then alert (the dotted target line draws, the gap fills, ping rings and wobbles repeat).
          */
         fun pulse(context: Context) = synchronized(animationLock) {
             val store = WaterStore(context)
             val level = store.todayMl().toFloat()
-            val n = 64
-            for (i in 1..n) {
-                val t = i / n.toFloat()
-                val rise = ease(((i - 12) / 16f).coerceIn(0f, 1f))
-                val drain = ((i - 38) / 14f).coerceIn(0f, 1f)
-                val wobble = (1f - t / 0.5f).coerceAtLeast(0f)
-                push(
-                    context, store,
-                    Frame(
-                        totalMl = level,
-                        phase = i * 0.5f,
-                        nudge = 0.35f + (NUDGE_REST - 0.35f) * drain,
-                        lineProgress = ((i - 4) / 9f).coerceIn(0f, 1f),
-                        preview = rise * (1f - drain * drain),
-                        rotate = 6f * sin(2 * PI * 4 * t).toFloat() * wobble,
-                        hop = 5f * abs(sin(2 * PI * 2 * t)).toFloat() * wobble,
-                        sweat = (((i - 34) / 6f).coerceIn(0f, 1f)) * (1f - ((i - 56) / 8f).coerceIn(0f, 1f)),
-                    ),
-                )
+            for (i in 1..PULSE_FRAMES) {
+                push(context, store, pulseFrame(i, level))
                 Thread.sleep(FRAME_MS)
             }
             refresh(context)
+        }
+
+        private const val CHARGE_END = 8
+        private const val BLAST_END = 16
+        private const val REBUILD_END = 40
+        private const val PULSE_FRAMES = 146
+        private val CORAL = android.graphics.Color.parseColor("#FF6F91")
+
+        private fun pulseFrame(i: Int, level: Float): Frame {
+            val blast = if (i in (CHARGE_END + 1)..REBUILD_END) (i - CHARGE_END - 1) / (REBUILD_END - CHARGE_END - 1f) else -1f
+            return when {
+                i <= CHARGE_END -> {
+                    val t = i / CHARGE_END.toFloat()
+                    val sign = if (i % 2 == 0) 1f else -1f
+                    Frame(
+                        totalMl = level, shakeX = sign * 14f * t, rotate = -sign * 8f * t, scale = 1f + 0.2f * t,
+                        flash = if (i % 2 == 0) 0.55f * t else 0f, flashColor = CORAL,
+                    )
+                }
+                i <= BLAST_END -> Frame(
+                    totalMl = level, opacity = 0f, blast = blast,
+                    flash = ((CHARGE_END + 5 - i) / 4f).coerceIn(0f, 1f), flashColor = android.graphics.Color.WHITE,
+                )
+                i <= REBUILD_END -> {
+                    val u = (i - BLAST_END) / (REBUILD_END - BLAST_END).toFloat()
+                    Frame(
+                        totalMl = level * ease((u * 1.3f).coerceAtMost(1f)),
+                        phase = i * 0.6f, waveAmp = 1f - u,
+                        scale = 1f - kotlin.math.exp(-5f * u) * kotlin.math.cos(2 * PI * 1.5 * u).toFloat() * 0.9f,
+                        opacity = (u * 3f).coerceIn(0f, 1f), blast = blast,
+                    )
+                }
+                else -> {
+                    val j = i - REBUILD_END
+                    val rise = ease(((j - 8) / 16f).coerceIn(0f, 1f))
+                    val drain = ((j - 62) / 14f).coerceIn(0f, 1f)
+                    var rotate = 0f; var hop = 0f; var ring = -1f
+                    for (k in intArrayOf(0, 30, 60, 90)) {
+                        if (j in k..(k + 18)) ring = (j - k) / 18f
+                        if (j in k..(k + 12)) {
+                            val tt = (j - k) / 12f
+                            rotate = 8f * sin(2 * PI * 3 * tt).toFloat() * (1f - tt)
+                            hop = 10f * abs(sin(2 * PI * 1.5 * tt)).toFloat() * (1f - tt)
+                        }
+                    }
+                    Frame(
+                        totalMl = level, phase = j * 0.5f, nudge = 0.6f,
+                        lineProgress = ((j - 2) / 9f).coerceIn(0f, 1f),
+                        preview = rise * (1f - drain * drain),
+                        rotate = rotate, hop = hop, ring = ring,
+                        sweat = ((j - 58) / 6f).coerceIn(0f, 1f) * (1f - ((j - 92) / 8f).coerceIn(0f, 1f)),
+                    )
+                }
+            }
         }
 
         /** After a tap: a happy little bounce with a few sparkles. */

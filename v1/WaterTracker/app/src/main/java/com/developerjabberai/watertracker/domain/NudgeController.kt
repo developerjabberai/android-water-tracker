@@ -7,7 +7,7 @@ import java.time.LocalTime
 
 /** Decides what the widget does when the phone is unlocked. */
 object NudgeController {
-    private const val COOLDOWN_MS = 10 * 60 * 1000L
+    private const val COOLDOWN_MS = 3 * 60 * 1000L
 
     /** How far behind the target (ml) before the widget nudges. */
     private const val BEHIND_THRESHOLD_ML = 100
