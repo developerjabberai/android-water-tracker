@@ -1,6 +1,9 @@
 package com.example.water_tracker_v1.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import com.example.water_tracker_v1.widget.BottleRenderer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,7 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.foundation.layout.Arrangement
@@ -90,8 +92,7 @@ fun ConfigScreen() {
         Section("Last 7 days") { WeekChart(history, goal) }
 
         Section("Daily goal") {
-            Chips(listOf(2000, 3000, 4000), goal, { "${it / 1000} L" }) { goal = it; store.goalMl = it; changed() }
-            Hint(if (goal <= 2000) "Shown as two 1 L bottles" else "Shown as one big bottle")
+            GoalPicker(listOf(2000, 3000, 4000), goal) { goal = it; store.goalMl = it; changed() }
         }
 
         Section("Glass size") {
@@ -115,24 +116,33 @@ private fun Section(title: String, content: @Composable () -> Unit) {
     }
 }
 
-/** Tumbler drawings scaled to real size, filled to the half a single tap adds. */
+/** Goal tiles use the widget's own bottle drawing, so the picker previews exactly what the widget shows. */
+@Composable
+private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
+    val context = LocalContext.current
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        goals.forEach { goal ->
+            // Drawn a hair under full so the goal-reached badge stays off; the widget prints the amount as the label.
+            val image = remember(goal) { BottleRenderer.render(context, goal * 0.999f, goal, 0f, 0f, 0f).asImageBitmap() }
+            OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
+                Image(image, contentDescription = "${goal / 1000} litre goal", modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+/** Every glass is the same size; a bigger glass just means more of them (200 ml = 1, 300 ml = 1.5, 400 ml = 2). */
 @Composable
 private fun GlassPicker(sizes: List<Int>, selected: Int, onPick: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         sizes.forEach { ml ->
-            val on = ml == selected
-            Column(
-                Modifier
-                    .weight(1f)
-                    .background(if (on) Blue.copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(16.dp))
-                    .border(if (on) 2.dp else 1.dp, if (on) Blue else Ink.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                    .clickable { onPick(ml) }
-                    .padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Box(Modifier.height(96.dp), contentAlignment = Alignment.BottomCenter) {
-                    Glass(heightDp = 48 + (ml - 200) * 24 / 100)
+            OptionTile(selected = ml == selected, modifier = Modifier.weight(1f), onClick = { onPick(ml) }) {
+                Row(Modifier.height(64.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
+                    var left = ml / GLASS_UNIT_ML
+                    while (left > 0f) {
+                        Glass(fill = minOf(left, 1f))
+                        left -= 1f
+                    }
                 }
                 Text("$ml ml", fontWeight = FontWeight.SemiBold, color = Ink)
                 Text("1 tap = ${ml / 2} ml", style = MaterialTheme.typography.labelSmall, color = Ink.copy(alpha = 0.65f))
@@ -141,41 +151,40 @@ private fun GlassPicker(sizes: List<Int>, selected: Int, onPick: (Int) -> Unit) 
     }
 }
 
+private const val GLASS_UNIT_ML = 200f
+
 @Composable
-private fun Glass(heightDp: Int) {
-    Canvas(Modifier.width((heightDp * 0.72f).dp).height(heightDp.dp)) {
+private fun OptionTile(selected: Boolean, modifier: Modifier, onClick: () -> Unit, content: @Composable () -> Unit) {
+    Column(
+        modifier
+            .background(if (selected) Blue.copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(16.dp))
+            .border(if (selected) 2.dp else 1.dp, if (selected) Blue else Ink.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) { content() }
+}
+
+/** One 200 ml tumbler, filled to [fill] of its height (a half-full glass is what one tap adds). */
+@Composable
+private fun Glass(fill: Float) {
+    Canvas(Modifier.width(30.dp).height(46.dp)) {
         val w = size.width
         val h = size.height
         val inset = w * 0.14f
         val glass = Path().apply {
             moveTo(0f, 0f); lineTo(w, 0f); lineTo(w - inset, h); lineTo(inset, h); close()
         }
-        // Water up to the half-way mark: exactly what one tap adds.
         clipPath(glass) {
-            drawRect(Blue.copy(alpha = 0.85f), topLeft = Offset(0f, h / 2), size = Size(w, h / 2))
+            drawRect(Blue.copy(alpha = 0.85f), topLeft = Offset(0f, h * (1f - fill)), size = Size(w, h * fill))
         }
-        drawPath(glass, Ink.copy(alpha = 0.35f), style = Stroke(width = 3.dp.toPx()))
-        drawLine(
-            Ink.copy(alpha = 0.5f), Offset(0f, h / 2), Offset(w, h / 2), strokeWidth = 1.5.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f)),
-        )
+        drawPath(glass, Ink.copy(alpha = 0.35f), style = Stroke(width = 2.5.dp.toPx()))
     }
 }
 
 @Composable
 private fun Hint(text: String) = Text(text, style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.6f))
-
-@Composable
-private fun Chips(options: List<Int>, selected: Int, label: (Int) -> String, onPick: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { FilterChip(
-            selected = it == selected,
-            onClick = { onPick(it) },
-            label = { Text(label(it)) },
-            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Blue.copy(alpha = 0.18f), selectedLabelColor = Ink),
-        ) }
-    }
-}
 
 @Composable
 private fun WeekChart(days: List<Pair<java.time.LocalDate, Int>>, goalMl: Int) {
