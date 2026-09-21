@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.water_tracker_v1.widget.BottleRenderer
+import com.example.water_tracker_v1.widget.Frame
 import kotlinx.coroutines.delay
 
 /**
@@ -40,7 +41,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun WelcomeScreen(onDone: () -> Unit) {
     val context = LocalContext.current
-    val preview = remember { BottleRenderer.render(context, 1100f, 2000, 0.7f, 0f, 0f).asImageBitmap() }
+    val preview = remember { BottleRenderer.render(context, 2000, 0.7f, Frame(totalMl = 1100f)).asImageBitmap() }
     var waiting by remember { mutableStateOf(false) }
     var added by remember { mutableStateOf(false) }
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import com.example.water_tracker_v1.widget.BottleRenderer
+import com.example.water_tracker_v1.widget.Frame
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -123,7 +124,7 @@ private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         goals.forEach { goal ->
             // Drawn a hair under full so the goal-reached badge stays off; the widget prints the amount as the label.
-            val image = remember(goal) { BottleRenderer.render(context, goal * 0.999f, goal, 0f, 0f, 0f).asImageBitmap() }
+            val image = remember(goal) { BottleRenderer.render(context, goal, 0f, Frame(totalMl = goal * 0.999f)).asImageBitmap() }
             OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
                 Image(image, contentDescription = "${goal / 1000} litre goal", modifier = Modifier.fillMaxWidth())
             }
