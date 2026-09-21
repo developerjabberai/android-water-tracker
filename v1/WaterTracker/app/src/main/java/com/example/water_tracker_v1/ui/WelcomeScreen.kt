@@ -75,7 +75,7 @@ fun WelcomeScreen(onDone: () -> Unit) {
             modifier = Modifier.padding(top = 24.dp),
         )
         Text(
-            "The widget is the whole app. Tap it on your home screen to log half a glass of water.",
+            "The widget is the whole app. Tap it on your home screen to log water.",
             color = Ink.copy(alpha = 0.75f),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 12.dp, bottom = 32.dp),

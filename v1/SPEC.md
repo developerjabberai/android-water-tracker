@@ -9,7 +9,7 @@
 The home-screen widget is the product. The app exists only for configuration and a small 7-day view.
 
 ## Widget
-- **Tap:** one tap logs half a glass (default glass 200 ml, so a tap is 100 ml). Users are educated that one tap = half a glass.
+- **Tap:** one tap logs half a glass (100 ml) by default, or a whole glass (200 ml) if the user picks that. A glass is 200 ml.
 - **Fill animation:** water rises to the new level on tap. Animation polish is a top priority. Approach: frame-sequence bitmap updates, since widgets can't run arbitrary animations.
 - **Goal display** (goal options: 2 L, 3 L, 4 L):
   - 2 L: two 1 L bottles, filling one after another
@@ -32,7 +32,7 @@ The home-screen widget is the product. The app exists only for configuration and
 
 ## Config app
 - Daily goal: 2 L, 3 L or 4 L
-- Glass size: 200, 300 or 400 ml (default 200), shown as a visual picker with what one tap adds
+- "1 Tap on widget fills": Half glass (100 ml, default) or One glass (200 ml), where a glass is 200 ml. Shown as the same glass at two fill levels.
 - Simple 7-day bar view plus today's total
 - "Add widget to home screen" button, always present (no show/hide logic)
 
@@ -40,8 +40,8 @@ The home-screen widget is the product. The app exists only for configuration and
 | Setting | Default |
 |---|---|
 | Goal | 2 L (choose from 2/3/4 L) |
-| Glass | 200 ml |
-| Tap | 100 ml |
+| Glass (fixed) | 200 ml |
+| Tap | 100 ml (half glass) or 200 ml (one glass) |
 | Waking hours (fixed, not configurable) | 07:00 to 23:00 |
 | Nudge threshold (fixed, not configurable) | 100 ml behind target |
 
@@ -49,6 +49,7 @@ The home-screen widget is the product. The app exists only for configuration and
 Commonly cited adequate total fluid intake is about 3.7 L/day for men and 2.7 L/day for women (US National Academies), including water from food. Drinking water alone is usually 2-3 L. The app lets users set their own goal and gives no medical advice.
 
 ## Decisions log
+- Glass size setting replaced by "1 Tap on widget fills": Half glass or One glass. Daily goal picker reuses the widget bottle drawing.
 - Removed wake/sleep and nudge-threshold settings to keep the config screen simple; both are fixed constants in code (Pace.kt, NudgeController.kt)
 - First launch: welcome screen with Add widget as the single CTA, then config; config always keeps an add-widget button
 - Goal reached: shine + sparkles once, then a check badge

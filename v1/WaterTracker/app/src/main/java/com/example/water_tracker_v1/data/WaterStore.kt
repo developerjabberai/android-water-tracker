@@ -11,9 +11,10 @@ class WaterStore(context: Context) {
         get() = prefs.getInt("goal", 2000)
         set(v) = prefs.edit().putInt("goal", v).apply()
 
-    var glassMl: Int
-        get() = prefs.getInt("glass", 200)
-        set(v) = prefs.edit().putInt("glass", v).apply()
+    /** What one tap on the widget logs: half a glass (100 ml) or a whole glass (200 ml). */
+    var tapMl: Int
+        get() = prefs.getInt("tap", HALF_GLASS_ML)
+        set(v) = prefs.edit().putInt("tap", v).apply()
 
     /** True while the widget is showing its "you're behind" look. Cleared by a tap or a new day. */
     var nudgePending: Boolean
@@ -28,8 +29,6 @@ class WaterStore(context: Context) {
     var onboarded: Boolean
         get() = prefs.getBoolean("onboarded", false)
         set(v) = prefs.edit().putBoolean("onboarded", v).apply()
-
-    val tapMl: Int get() = glassMl / 2
 
     fun todayMl(): Int {
         rollOverIfNeeded()
@@ -57,5 +56,10 @@ class WaterStore(context: Context) {
         val e = prefs.edit()
         if (stored != null) e.putInt("day_$stored", prefs.getInt("today", 0))
         e.putString("date", today).putInt("today", 0).putBoolean("nudge_pending", false).apply()
+    }
+
+    companion object {
+        const val GLASS_ML = 200
+        const val HALF_GLASS_ML = GLASS_ML / 2
     }
 }

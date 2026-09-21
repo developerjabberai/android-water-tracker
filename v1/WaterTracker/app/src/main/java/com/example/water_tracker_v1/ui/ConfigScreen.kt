@@ -59,7 +59,7 @@ fun ConfigScreen() {
     val context = LocalContext.current
     val store = remember { WaterStore(context) }
     var goal by remember { mutableIntStateOf(store.goalMl) }
-    var glass by remember { mutableIntStateOf(store.glassMl) }
+    var tap by remember { mutableIntStateOf(store.tapMl) }
     val history = remember { store.historyMl() }
 
     fun changed() = WaterWidgetProvider.refresh(context)
@@ -95,9 +95,9 @@ fun ConfigScreen() {
             GoalPicker(listOf(2000, 3000, 4000), goal) { goal = it; store.goalMl = it; changed() }
         }
 
-        Section("Glass size") {
-            GlassPicker(listOf(200, 300, 400), glass) { glass = it; store.glassMl = it; changed() }
-            Hint("One tap on the widget = half a glass = ${glass / 2} ml")
+        Section("1 Tap on widget fills") {
+            TapPicker(tap) { tap = it; store.tapMl = it }
+            Hint("A glass is ${WaterStore.GLASS_ML} ml")
         }
     }
 }
@@ -131,27 +131,23 @@ private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
     }
 }
 
-/** Every glass is the same size; a bigger glass just means more of them (200 ml = 1, 300 ml = 1.5, 400 ml = 2). */
+/** Same glass, two fill levels: what one tap logs. */
 @Composable
-private fun GlassPicker(sizes: List<Int>, selected: Int, onPick: (Int) -> Unit) {
+private fun TapPicker(selected: Int, onPick: (Int) -> Unit) {
+    val options = listOf(
+        Triple(WaterStore.HALF_GLASS_ML, 0.5f, "Half glass"),
+        Triple(WaterStore.GLASS_ML, 1f, "One glass"),
+    )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        sizes.forEach { ml ->
+        options.forEach { (ml, fill, label) ->
             OptionTile(selected = ml == selected, modifier = Modifier.weight(1f), onClick = { onPick(ml) }) {
-                Row(Modifier.height(64.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
-                    var left = ml / GLASS_UNIT_ML
-                    while (left > 0f) {
-                        Glass(fill = minOf(left, 1f))
-                        left -= 1f
-                    }
-                }
-                Text("$ml ml", fontWeight = FontWeight.SemiBold, color = Ink)
-                Text("1 tap = ${ml / 2} ml", style = MaterialTheme.typography.labelSmall, color = Ink.copy(alpha = 0.65f))
+                Box(Modifier.height(64.dp), contentAlignment = Alignment.BottomCenter) { Glass(fill) }
+                Text(label, fontWeight = FontWeight.SemiBold, color = Ink)
+                Text("$ml ml", style = MaterialTheme.typography.labelSmall, color = Ink.copy(alpha = 0.65f))
             }
         }
     }
 }
-
-private const val GLASS_UNIT_ML = 200f
 
 @Composable
 private fun OptionTile(selected: Boolean, modifier: Modifier, onClick: () -> Unit, content: @Composable () -> Unit) {
@@ -166,7 +162,7 @@ private fun OptionTile(selected: Boolean, modifier: Modifier, onClick: () -> Uni
     ) { content() }
 }
 
-/** One 200 ml tumbler, filled to [fill] of its height (a half-full glass is what one tap adds). */
+/** A 200 ml tumbler, filled to [fill] of its height. */
 @Composable
 private fun Glass(fill: Float) {
     Canvas(Modifier.width(30.dp).height(46.dp)) {
