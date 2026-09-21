@@ -24,6 +24,11 @@ class WaterStore(context: Context) {
         get() = LocalTime.ofSecondOfDay(prefs.getInt("sleep", 23 * 3600).toLong())
         set(v) = prefs.edit().putInt("sleep", v.toSecondOfDay()).apply()
 
+    /** How far behind pace (ml) before the widget nudges. */
+    var nudgeMl: Int
+        get() = prefs.getInt("nudge", 125)
+        set(v) = prefs.edit().putInt("nudge", v).apply()
+
     val tapMl: Int get() = glassMl / 2
 
     fun todayMl(): Int {

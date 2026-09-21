@@ -67,6 +67,15 @@ class WaterWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        /** Redraw all widgets, e.g. after a setting changed. */
+        fun refresh(context: Context) {
+            val manager = AppWidgetManager.getInstance(context)
+            val ids = manager.getAppWidgetIds(ComponentName(context, WaterWidgetProvider::class.java))
+            if (ids.isEmpty()) return
+            val store = WaterStore(context)
+            WaterWidgetProvider().push(context, manager, ids, store, store.todayMl().toFloat(), 0f, 0f)
+        }
+
         const val ACTION_TAP = "com.example.water_tracker_v1.ACTION_TAP"
         private const val FRAMES = 16
         private const val FRAME_MS = 45L
