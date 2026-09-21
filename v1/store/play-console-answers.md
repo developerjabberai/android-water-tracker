@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.1 (code 2) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.4 (code 5) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
@@ -41,7 +41,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 |---|---|
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE` | The unlock listener above |
 | `RECEIVE_BOOT_COMPLETED` | Restart that listener after a reboot |
-| `POST_NOTIFICATIONS` | Lets Android show the service's quiet "Watching your pace" notification (asked once, after the welcome; optional) |
+| `POST_NOTIFICATIONS` | Lets Android show the service's quiet "Watching your pace" notification (asked once, after the welcome, with a short in-app explanation first; optional) |
 No location, contacts, storage, camera, microphone or internet permissions.
 
 ## 6. Release

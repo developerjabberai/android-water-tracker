@@ -37,6 +37,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,7 +60,7 @@ internal val Blue = Color(0xFF2E9BF0)
 internal val Ink = Color(0xFF12324A)
 
 @Composable
-fun ConfigScreen() {
+fun ConfigScreen(resumeTick: Int = 0) {
     val context = LocalContext.current
     val store = remember { WaterStore(context) }
     var goal by remember { mutableIntStateOf(store.goalMl) }
@@ -81,15 +82,28 @@ fun ConfigScreen() {
         Text("The widget is the app. Set it up here, then tap it on your home screen.", color = Ink.copy(alpha = 0.7f))
 
         Section("Home screen widget") {
-            Text("The widget is where you log water. Add it any time, on any home screen page.", color = Ink.copy(alpha = 0.75f))
-            if (canPin(context)) {
-                Button(
-                    onClick = { requestPin(context) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
-                ) { Text("Add widget to home screen", fontWeight = FontWeight.Bold) }
+            // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
+            val widgets = remember(resumeTick) { widgetCount(context) }
+            if (widgets > 0) {
+                Text(
+                    if (widgets == 1) "\u2713  Widget added to your home screen" else "\u2713  $widgets widgets on your home screen",
+                    color = Blue, fontWeight = FontWeight.Bold,
+                )
+                Text("Tap it there to log water.", color = Ink.copy(alpha = 0.75f))
+                if (canPin(context)) {
+                    TextButton(onClick = { requestPin(context) }) { Text("Add another", color = Blue) }
+                }
             } else {
-                Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.")
+                Text("The widget is where you log water. Add it to your home screen to start.", color = Ink.copy(alpha = 0.75f))
+                if (canPin(context)) {
+                    Button(
+                        onClick = { requestPin(context) },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                    ) { Text("Add widget to home screen", fontWeight = FontWeight.Bold) }
+                } else {
+                    Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.")
+                }
             }
         }
 
