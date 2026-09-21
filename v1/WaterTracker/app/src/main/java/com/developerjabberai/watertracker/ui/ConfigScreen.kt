@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -36,6 +37,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -71,44 +73,30 @@ fun ConfigScreen(resumeTick: Int = 0) {
 
     fun changed() = WaterWidgetProvider.refresh(context)
 
+    // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
+    val widgets = remember(resumeTick) { widgetCount(context) }
+
+    Column(Modifier.fillMaxSize().background(Color(0xFFF4FAFD)).statusBarsPadding().navigationBarsPadding()) {
     Column(
-        Modifier
-            .background(Color(0xFFF4FAFD))
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+        Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Water Tracker", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
         Text("Pick your goal below, then tap the widget on your home screen to log water.", color = Ink.copy(alpha = 0.7f))
 
         Section("Home screen widget") {
-            // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
-            val widgets = remember(resumeTick) { widgetCount(context) }
             if (widgets > 0) {
                 Text(
                     if (widgets == 1) "\u2713  Widget added to your home screen" else "\u2713  $widgets widgets on your home screen",
                     color = Blue, fontWeight = FontWeight.Bold,
                 )
                 Text("Tap it there to log water.", color = Ink.copy(alpha = 0.75f))
-                Button(
-                    onClick = { goToWidget(context) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
-                ) { Text("Check the widget", fontWeight = FontWeight.Bold) }
                 if (canPin(context)) {
                     TextButton(onClick = { requestPin(context) }) { Text("Add another", color = Blue) }
                 }
             } else {
                 Text("The widget is where you log water. Add it to your home screen to start.", color = Ink.copy(alpha = 0.75f))
-                if (canPin(context)) {
-                    Button(
-                        onClick = { requestPin(context) },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Blue),
-                    ) { Text("Add widget to home screen", fontWeight = FontWeight.Bold) }
-                } else {
+                if (!canPin(context)) {
                     Hint("Long-press an empty spot on your home screen, tap Widgets, then drag out Water Tracker.")
                 }
             }
@@ -139,6 +127,21 @@ fun ConfigScreen(resumeTick: Int = 0) {
             TapPicker(tap) { tap = it; store.tapMl = it }
             Hint("A glass is ${WaterStore.GLASS_ML} ml")
         }
+    }
+
+    // The main action, always in reach at the bottom of the screen.
+    if (widgets > 0 || canPin(context)) {
+        HorizontalDivider(color = Ink.copy(alpha = 0.08f))
+        Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 20.dp, vertical = 12.dp)) {
+            Button(
+                onClick = { if (widgets > 0) goToWidget(context) else requestPin(context) },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Blue),
+            ) {
+                Text(if (widgets > 0) "Check the widget" else "Add widget to home screen", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
     }
 }
 
