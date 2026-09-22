@@ -27,7 +27,7 @@ The home-screen widget is the product. The app exists only for configuration and
 - **Daily reset:** midnight. An inexact alarm at 00:01 redraws the widget; unlock also rolls over a stale day, and yesterday's total is kept for the 7-day view.
 - **Out of scope for MVP:** undo.
 
-## Creeper (streak)
+## Creeper (streak) — currently disabled in the UI (looked congested); level-tracking still runs quietly in storage
 - A vine winds up the bottle, with **10 growth levels**: 1 Wilted, 2 Struggling, 3 Recovering, 4 Sprout, **5 Steady (start)**, 6 Climbing, 7 Lush, 8 Budding, 9 Blooming, 10 Full bloom. Colour tells the story (brown, yellow, light green, deep green, pink flowers).
 - **Grows** one level the moment the day's goal is first reached (once per day), during the goal celebration. Partial days do not count.
 - **Shrinks** one level for each missed day, including days the app was not used, never below level 1. It stays at 10 while the streak continues.

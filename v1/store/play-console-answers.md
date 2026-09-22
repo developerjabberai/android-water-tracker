@@ -10,7 +10,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 - Text: `v1/store/listing.md`
 - App icon: `v1/store/icon-512.png` (512×512)
 - Feature graphic: `v1/store/feature-graphic-1024x500.png`
-- Phone screenshots (upload all five, in order): `v1/store/screenshots/1-home.png` … `5-settings.png`
+- Phone screenshots (upload all three, in order): `v1/store/screenshots/1-home.png`, `2-tap.png`, `3-reminder.png`
 - Category: **Health & Fitness** · Email: your support email · Website (optional): https://developerjabberai.github.io/android-water-tracker/
 
 ## 3. App content
@@ -45,7 +45,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 No location, contacts, storage, camera, microphone or internet permissions.
 
 ## 6. Release
-1. **Internal testing** first: create a release, upload the `.aab`, add your own Google account as a tester, install the Play-signed build on your phone and check the widget, the reminder and the creeper.
+1. **Internal testing** first: create a release, upload the `.aab`, add your own Google account as a tester, install the Play-signed build on your phone and check the widget and the reminder.
 2. Then **Production**: create the release, use the "What's new" text from `listing.md`, roll out to 100%, submit for review.
 3. Keep **Play App Signing** on (default). Your `.jks` is only the upload key: keep it and its passwords safe and backed up.
 4. Bump `versionCode` in `v1/WaterTracker/app/build.gradle.kts` for every upload. Play rejects a version code it has already seen (this is why the bundle is now code 2).
