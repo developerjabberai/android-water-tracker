@@ -128,7 +128,7 @@ object BottleRenderer {
         val fill = (f.totalMl / goalMl).coerceIn(0f, 1f)
         val goalReached = f.totalMl >= goalMl
         val litres = (goalMl / 1000).coerceAtLeast(1)
-        val creeperLevel = if (f.creeper >= 0f) f.creeper else WaterStore(context).creeperLevel().toFloat()
+        // Creeper is disabled for now (looked congested on the widget); level-tracking still runs quietly in the background.
 
         val centerY = feetY - art.outline.height() * s * 0.45f
         if (f.blast in 0f..1f) drawShockwave(c, p, cx + f.shakeX, centerY, f.blast)
@@ -143,9 +143,7 @@ object BottleRenderer {
             c.scale(1f, f.squash)
             c.scale(s, s)
             c.translate(-(art.outline.centerX()), -art.outline.bottom)
-            CreeperRenderer.draw(c, p, art, creeperLevel, front = false)
             drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
-            CreeperRenderer.draw(c, p, art, creeperLevel, front = true)
             if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
             c.restore()
             c.restoreToCount(layer)
