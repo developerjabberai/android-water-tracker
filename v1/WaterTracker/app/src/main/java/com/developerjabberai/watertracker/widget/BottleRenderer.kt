@@ -232,7 +232,6 @@ object BottleRenderer {
                     c.clipPath(layer.path)
                     if (fill > 0f) drawWave(c, p, art, waterY, f.phase, f.waveAmp, art.bodyColor, 255)
                     if (i == art.bodyLayer) {
-                        if (!goalReached) drawGhost(c, p, art, fill, paceFrac, f)
                         drawTicks(c, p, art, litres)
                         if (f.celebrate in 0f..1f) drawShine(c, p, art, f.celebrate)
                     }
@@ -248,6 +247,12 @@ object BottleRenderer {
                 }
                 LayerKind.OTHER -> fillLayer(c, p, layer, null)
             }
+        }
+        // Drawn last, on top of ears/whiskers/highlights (which would otherwise paint over it since they
+        // come after the water body in the layer stack), but still clipped to the full outline so it never
+        // spills past the character's silhouette.
+        if (!goalReached) {
+            drawGhost(c, p, art, fill, paceFrac, f)
         }
     }
 
@@ -284,40 +289,63 @@ object BottleRenderer {
         p.alpha = 255
     }
 
-    /** Dotted line where the water should be by now, with a soft band showing the gap when behind. */
+    private val FLAG = Color.parseColor("#F0483C")
+
+    /**
+     * Dotted line where the water should be by now, with a small flag marking it as a target
+     * (clearer at a glance than shading, which read as an unexplained blue smudge).
+     */
     private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame) {
         if (paceFrac <= 0f) return
         val yGhost = levelY(art, paceFrac.coerceAtMost(1f))
         val yWater = levelY(art, fill)
         val left = art.body.left
         val right = art.body.right
-        if (yGhost < yWater) {
-            p.style = Paint.Style.FILL; p.shader = null; p.color = art.bodyColor; p.alpha = (55 + 90 * f.nudge).toInt()
-            c.drawRect(left, yGhost, right, yWater, p)
-            p.alpha = 255
-            if (f.preview > 0f) {
-                val yTop = yWater + (yGhost - yWater) * f.preview
-                val path = Path().apply {
-                    moveTo(left, yWater + 10f)
-                    var x = left
-                    while (x <= right) {
-                        lineTo(x, yTop + 14f * sin(((x - left) / (right - left) * 4 * PI + f.phase * 3).toDouble()).toFloat())
-                        x += 14f
-                    }
-                    lineTo(right, yWater + 10f); close()
+        if (yGhost < yWater && f.preview > 0f) {
+            // Translucent water rising toward the target, shown only during the reminder animation.
+            val yTop = yWater + (yGhost - yWater) * f.preview
+            val path = Path().apply {
+                moveTo(left, yWater + 10f)
+                var x = left
+                while (x <= right) {
+                    lineTo(x, yTop + 14f * sin(((x - left) / (right - left) * 4 * PI + f.phase * 3).toDouble()).toFloat())
+                    x += 14f
                 }
-                p.color = WATER_LIGHT; p.alpha = 235
-                c.drawPath(path, p)
-                p.alpha = 255
+                lineTo(right, yWater + 10f); close()
             }
+            p.style = Paint.Style.FILL; p.shader = null; p.color = WATER_LIGHT; p.alpha = 235
+            c.drawPath(path, p)
+            p.alpha = 255
         }
         val end = left + (right - left) * f.lineProgress.coerceIn(0f, 1f)
         if (end > left) {
-            p.style = Paint.Style.STROKE; p.strokeWidth = 24f; p.strokeCap = Paint.Cap.ROUND; p.color = INK
-            p.pathEffect = DashPathEffect(floatArrayOf(4f, 50f), 0f)
+            p.style = Paint.Style.STROKE; p.shader = null; p.strokeWidth = 20f; p.strokeCap = Paint.Cap.ROUND; p.color = FLAG
+            p.pathEffect = DashPathEffect(floatArrayOf(4f, 44f), 0f)
             c.drawLine(left, yGhost, end, yGhost, p)
             p.pathEffect = null; p.strokeCap = Paint.Cap.BUTT
+            drawFlag(c, p, left + (right - left) * 0.86f, yGhost, (right - left) * 0.16f, f.lineProgress)
         }
+    }
+
+    /**
+     * A small pennant straddling the target line (no separate pole, so it can't poke up into the neck or cap
+     * regardless of how high the target sits) — reads as a goal marker rather than a stray dash.
+     */
+    private fun drawFlag(c: Canvas, p: Paint, x: Float, y: Float, size: Float, appear: Float) {
+        if (appear <= 0f) return
+        val w = size * appear.coerceIn(0f, 1f)
+        val pennant = Path().apply {
+            moveTo(x, y - size * 0.42f)
+            lineTo(x - w, y)
+            lineTo(x, y + size * 0.42f)
+            close()
+        }
+        p.pathEffect = null; p.shader = null
+        p.style = Paint.Style.FILL; p.color = FLAG
+        c.drawPath(pennant, p)
+        p.style = Paint.Style.STROKE; p.strokeWidth = size * 0.1f; p.strokeJoin = Paint.Join.ROUND; p.color = INK
+        c.drawPath(pennant, p)
+        p.strokeJoin = Paint.Join.MITER
     }
 
     /** A tick at each litre, starting at the body's left edge, so the one bottle still tells 2 L from 3 L from 4 L. */

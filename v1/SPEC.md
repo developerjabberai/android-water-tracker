@@ -70,6 +70,7 @@ Commonly cited adequate total fluid intake is about 3.7 L/day for men and 2.7 L/
 - Stack: Kotlin (only option that renders widgets natively)
 - Nudge: widget-only, detected on unlock via a silent foreground service (Android blocks manifest unlock receivers)
 - Widget shows litres ("1.88 L") in bundled Nunito; ghost dotted level replaces the red pace line
+- Target line: dropped the shaded "gap" fill (read as an unexplained blue smudge); the dotted line is now a red/coral accent colour with a small flag pennant marking the exact level, drawn after all character layers (not clipped to the water body) so it isn't painted over by ears/whiskers/highlights
 - Interval: pace-based, not fixed hours
 - Pace curve: front-loaded
 - Reset: midnight

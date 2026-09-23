@@ -1,6 +1,6 @@
 # Google Play Console: answers to copy in
 
-App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.11 (code 12) · signed AAB at
+App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Remind" (app name on the phone: "Water Tracker") · version 1.0.12 (code 13) · signed AAB at
 `v1/WaterTracker/app/build/outputs/bundle/release/app-release.aab`
 
 ## 1. Create the app
@@ -48,7 +48,7 @@ No location, contacts, storage, camera, microphone or internet permissions.
 1. **Internal testing** first: create a release, upload the `.aab`, add your own Google account as a tester, install the Play-signed build on your phone and check the widget and the reminder.
 2. Then **Production**: create the release, use the "What's new" text from `listing.md`, roll out to 100%, submit for review.
 3. Keep **Play App Signing** on (default). Your `.jks` is only the upload key: keep it and its passwords safe and backed up.
-4. Bump `versionCode` in `v1/WaterTracker/app/build.gradle.kts` for every upload. Play rejects a version code it has already seen (this is why the bundle is now code 2).
+4. Bump `versionCode` in `v1/WaterTracker/app/build.gradle.kts` for every upload. Play rejects a version code it has already seen.
 
 ## 7. Before you press submit
 - [ ] Replace `<your-support-email>` in `v1/store/listing.md` (the email field in Play Console is separate and required)
