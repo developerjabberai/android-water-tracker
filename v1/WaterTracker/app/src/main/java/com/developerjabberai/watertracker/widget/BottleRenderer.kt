@@ -72,6 +72,9 @@ object BottleRenderer {
     private const val ART_MAX_H = 300f
     private const val ART_TOP = 12f
 
+    /** Extra horizontal-only stretch so the bottle reads a bit plumper, without changing its height. */
+    private const val WIDTH_STRETCH = 1.14f
+
     /** Each character has its own background colour, so the widget's colour changes with the day's character. */
     private val BACKGROUNDS = intArrayOf(
         Color.parseColor("#FFD966"), // sunny yellow
@@ -121,7 +124,7 @@ object BottleRenderer {
         // Soft shadow that shrinks as the character hops.
         p.style = Paint.Style.FILL; p.color = INK
         p.alpha = (50 * (1f - (f.hop / 90f).coerceIn(0f, 0.6f))).toInt()
-        val shadowW = art.outline.width() * s * 0.36f * (1f - (f.hop / 200f).coerceIn(0f, 0.4f))
+        val shadowW = art.outline.width() * s * WIDTH_STRETCH * 0.36f * (1f - (f.hop / 200f).coerceIn(0f, 0.4f))
         c.drawOval(RectF(cx - shadowW, feetY - 2f, cx + shadowW, feetY + 14f), p)
         p.alpha = 255
 
@@ -141,7 +144,7 @@ object BottleRenderer {
             c.rotate(f.rotate)
             c.scale(f.scale, f.scale)
             c.scale(1f, f.squash)
-            c.scale(s, s)
+            c.scale(s * WIDTH_STRETCH, s)
             c.translate(-(art.outline.centerX()), -art.outline.bottom)
             drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
             if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
@@ -225,6 +228,7 @@ object BottleRenderer {
     private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame) {
         val waterY = levelY(art, fill)
         for ((i, layer) in art.layers.withIndex()) {
+            if (i in art.hidden) continue
             when (layer.kind) {
                 LayerKind.BODY -> {
                     fillLayer(c, p, layer, GLASS)
@@ -289,11 +293,18 @@ object BottleRenderer {
         p.alpha = 255
     }
 
-    private val FLAG = Color.parseColor("#F0483C")
+    private val BEHIND = Color.parseColor("#F0483C")
+    private val CLOSE = Color.parseColor("#D9A22B")
+    private val ON_PACE = Color.parseColor("#3FA34D")
+
+    /** How far behind (as a fraction of the goal) still counts as "almost there" and gets the amber warning. */
+    private const val CLOSE_GAP = 0.04f
 
     /**
-     * Dotted line where the water should be by now, with a small flag marking it as a target
-     * (clearer at a glance than shading, which read as an unexplained blue smudge).
+     * Dotted line where the water should be by now, with a small bullseye marking it as a target
+     * (clearer at a glance than shading, which read as an unexplained blue smudge, or a flag, which
+     * didn't read as anything in particular at this size). Colour reports status at a glance: green once
+     * you've caught up, amber when you're close, red when you're clearly behind.
      */
     private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame) {
         if (paceFrac <= 0f) return
@@ -301,6 +312,12 @@ object BottleRenderer {
         val yWater = levelY(art, fill)
         val left = art.body.left
         val right = art.body.right
+        val gap = paceFrac - fill
+        val statusColor = when {
+            gap <= 0f -> ON_PACE
+            gap <= CLOSE_GAP -> CLOSE
+            else -> BEHIND
+        }
         if (yGhost < yWater && f.preview > 0f) {
             // Translucent water rising toward the target, shown only during the reminder animation.
             val yTop = yWater + (yGhost - yWater) * f.preview
@@ -317,40 +334,43 @@ object BottleRenderer {
             c.drawPath(path, p)
             p.alpha = 255
         }
-        val end = left + (right - left) * f.lineProgress.coerceIn(0f, 1f)
+        // The bullseye's centre sits right on the bottle's edge — not a fixed fraction of the body's
+        // rectangular bounds, since the silhouette curves in near the shoulder/neck; scan inward at this
+        // exact height for where the bottle actually ends.
+        val edge = run {
+            var x = right.toInt()
+            val limit = art.body.centerX().toInt()
+            while (x > limit && !art.bodyRegion.contains(x, yGhost.toInt())) x -= 4
+            if (x > limit) x.toFloat() else right
+        }
+        val end = left + (edge - left) * f.lineProgress.coerceIn(0f, 1f)
         if (end > left) {
-            p.style = Paint.Style.STROKE; p.shader = null; p.strokeWidth = 20f; p.strokeCap = Paint.Cap.ROUND; p.color = FLAG
+            p.style = Paint.Style.STROKE; p.shader = null; p.strokeWidth = 20f; p.strokeCap = Paint.Cap.ROUND; p.color = statusColor
             p.pathEffect = DashPathEffect(floatArrayOf(4f, 44f), 0f)
             c.drawLine(left, yGhost, end, yGhost, p)
             p.pathEffect = null; p.strokeCap = Paint.Cap.BUTT
-            drawFlag(c, p, left + (right - left) * 0.86f, yGhost, (right - left) * 0.16f, f.lineProgress)
+            drawBullseye(c, p, end, yGhost, (right - left) * 0.1f, f.lineProgress, statusColor)
         }
     }
 
-    /**
-     * A small pennant straddling the target line (no separate pole, so it can't poke up into the neck or cap
-     * regardless of how high the target sits) — reads as a goal marker rather than a stray dash.
-     */
-    private fun drawFlag(c: Canvas, p: Paint, x: Float, y: Float, size: Float, appear: Float) {
+    /** A target/bullseye marker sitting on the line, its centre exactly on the line — reads as a goal marker at a glance. */
+    private fun drawBullseye(c: Canvas, p: Paint, x: Float, y: Float, size: Float, appear: Float, color: Int) {
         if (appear <= 0f) return
-        val w = size * appear.coerceIn(0f, 1f)
-        val pennant = Path().apply {
-            moveTo(x, y - size * 0.42f)
-            lineTo(x - w, y)
-            lineTo(x, y + size * 0.42f)
-            close()
-        }
+        val r = size * appear.coerceIn(0f, 1f)
         p.pathEffect = null; p.shader = null
-        p.style = Paint.Style.FILL; p.color = FLAG
-        c.drawPath(pennant, p)
-        p.style = Paint.Style.STROKE; p.strokeWidth = size * 0.1f; p.strokeJoin = Paint.Join.ROUND; p.color = INK
-        c.drawPath(pennant, p)
-        p.strokeJoin = Paint.Join.MITER
+        p.style = Paint.Style.FILL; p.color = Color.WHITE
+        c.drawCircle(x, y, r, p)
+        p.style = Paint.Style.STROKE; p.strokeWidth = size * 0.32f; p.color = color
+        c.drawCircle(x, y, r, p)
+        p.style = Paint.Style.FILL; p.color = color
+        c.drawCircle(x, y, r * 0.4f, p)
     }
 
     /** A tick at each litre, starting at the body's left edge, so the one bottle still tells 2 L from 3 L from 4 L. */
     private fun drawTicks(c: Canvas, p: Paint, art: Art, litres: Int) {
-        if (litres < 2) return
+        // A 2 L goal would draw exactly one tick, at the dead centre of the bottle — not useful (there's
+        // nothing to distinguish), and easy to mistake for a stray line right where the face sits.
+        if (litres < 3) return
         p.style = Paint.Style.STROKE; p.shader = null; p.strokeWidth = 24f; p.strokeCap = Paint.Cap.ROUND
         p.color = INK; p.alpha = 190
         for (k in 1 until litres) {
@@ -428,23 +448,22 @@ object BottleRenderer {
         p.strokeCap = Paint.Cap.BUTT; p.strokeJoin = Paint.Join.MITER
     }
 
-    /** Big number with a smaller unit: "1.5 L", or "700 ml" below one litre. */
+    /** Big number in glasses (a glass is a fixed 200 ml, independent of the half/full tap setting), e.g. "3.5 glass". */
     private fun drawAmount(c: Canvas, p: Paint, totalMl: Float) {
-        val (number, unit) = if (totalMl >= 1000f) {
-            "%.2f".format(totalMl / 1000f).trimEnd('0').trimEnd('.') to "L"
-        } else {
-            totalMl.toInt().toString() to "ml"
-        }
+        val glasses = totalMl / WaterStore.GLASS_ML
+        val number = "%.1f".format(glasses).trimEnd('0').trimEnd('.')
+        val unit = "glass"
         p.style = Paint.Style.FILL; p.shader = null; p.color = INK; p.textAlign = Paint.Align.LEFT
-        p.typeface = numberFont; p.textSize = 62f
+        p.typeface = numberFont; p.textSize = 54f
         val numW = p.measureText(number)
         p.textSize = 38f
         val unitW = p.measureText(unit)
         val gap = 8f
         val x = (SIZE - (numW + gap + unitW)) / 2f
         val baseline = SIZE - 24f
-        p.textSize = 62f
+        p.textSize = 54f
         c.drawText(number, x, baseline, p)
+        // Bottom-aligned with the number (same baseline), not centred against it.
         p.textSize = 38f; p.alpha = 175
         c.drawText(unit, x + numW + gap, baseline, p)
         p.alpha = 255

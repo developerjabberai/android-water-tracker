@@ -105,6 +105,7 @@ fun ConfigScreen(resumeTick: Int = 0) {
 
         Section("Daily goal") {
             GoalPicker(listOf(2000, 3000, 4000), goal) { goal = it; store.goalMl = it; changed() }
+            Hint("${goal / WaterStore.GLASS_ML} glasses / ${goal / 1000} L")
         }
 
         Section("1 Tap on widget fills") {
