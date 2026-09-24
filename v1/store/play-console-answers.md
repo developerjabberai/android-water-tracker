@@ -10,7 +10,7 @@ App ID `com.developerjabberai.watertracker` · Title "Widget: Water Tracker & Re
 - Text: `v1/store/listing.md`
 - App icon: `v1/store/icon-512.png` (512×512)
 - Feature graphic: `v1/store/feature-graphic-1024x500.png`
-- Phone screenshots (upload all three, in order): `v1/store/screenshots/1-home.png`, `2-tap.png`, `3-reminder.png`
+- Phone screenshots (upload all four, in order, from the `android/` folder — genuine Android device captures, not generic mobile mockups): `v1/store/screenshots/android/1-home.png`, `2-tap.png`, `3-track.png`, `4-reminder.png`
 - Category: **Health & Fitness** · Email: your support email · Website (optional): https://developerjabberai.github.io/android-water-tracker/
 
 ## 3. App content

@@ -106,9 +106,12 @@ object BottleRenderer {
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        val artIndex = if (f.art >= 0) f.art else WaterStore(context).artToday()
+        // Keeping things simple for now: only the card colour rotates day to day (still picked the same
+        // way as before); the character itself is always the first one (the one with ears). The other
+        // three character designs are unused until we're ready to bring them back in.
+        val bgIndex = if (f.art >= 0) f.art else WaterStore(context).artToday()
         val card = RectF(0f, 0f, SIZE.toFloat(), SIZE.toFloat())
-        p.color = BACKGROUNDS[artIndex.coerceIn(0, BACKGROUNDS.size - 1)]
+        p.color = BACKGROUNDS[bgIndex.coerceIn(0, BACKGROUNDS.size - 1)]
         c.drawRoundRect(card, 70f, 70f, p)
         if (f.flash > 0f) {
             p.color = f.flashColor; p.alpha = (255 * f.flash.coerceIn(0f, 1f)).toInt()
@@ -116,7 +119,7 @@ object BottleRenderer {
             p.alpha = 255
         }
 
-        val art = ArtLibrary.get(context, artIndex)
+        val art = ArtLibrary.get(context, 0)
         val s = min(ART_MAX_W / art.outline.width(), ART_MAX_H / art.outline.height())
         val cx = SIZE / 2f
         val feetY = ART_TOP + art.outline.height() * s
@@ -146,7 +149,7 @@ object BottleRenderer {
             c.scale(1f, f.squash)
             c.scale(s * WIDTH_STRETCH, s)
             c.translate(-(art.outline.centerX()), -art.outline.bottom)
-            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
+            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f, goalMl)
             if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
             c.restore()
             c.restoreToCount(layer)
@@ -225,7 +228,7 @@ object BottleRenderer {
         return art.body.bottom - (art.body.bottom - top) * frac
     }
 
-    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame) {
+    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame, goalMl: Int) {
         val waterY = levelY(art, fill)
         for ((i, layer) in art.layers.withIndex()) {
             if (i in art.hidden) continue
@@ -256,7 +259,7 @@ object BottleRenderer {
         // come after the water body in the layer stack), but still clipped to the full outline so it never
         // spills past the character's silhouette.
         if (!goalReached) {
-            drawGhost(c, p, art, fill, paceFrac, f)
+            drawGhost(c, p, art, fill, paceFrac, f, goalMl)
         }
     }
 
@@ -294,29 +297,29 @@ object BottleRenderer {
     }
 
     private val BEHIND = Color.parseColor("#F0483C")
-    private val CLOSE = Color.parseColor("#D9A22B")
-    private val ON_PACE = Color.parseColor("#3FA34D")
+    private val AHEAD = Color.parseColor("#2E9BF0")
+    private val ON_TRACK = Color.parseColor("#3FA34D")
 
-    /** How far behind (as a fraction of the goal) still counts as "almost there" and gets the amber warning. */
-    private const val CLOSE_GAP = 0.04f
+    /** How far off pace (in glasses) still counts as "on track" before it reports behind/ahead instead. */
+    private const val ON_TRACK_GLASSES = 2f
 
     /**
      * Dotted line where the water should be by now, with a small bullseye marking it as a target
      * (clearer at a glance than shading, which read as an unexplained blue smudge, or a flag, which
-     * didn't read as anything in particular at this size). Colour reports status at a glance: green once
-     * you've caught up, amber when you're close, red when you're clearly behind.
+     * didn't read as anything in particular at this size). Colour reports status at a glance: green
+     * within 2 glasses of pace either way, blue when well ahead, red when clearly behind.
      */
-    private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame) {
+    private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame, goalMl: Int) {
         if (paceFrac <= 0f) return
         val yGhost = levelY(art, paceFrac.coerceAtMost(1f))
         val yWater = levelY(art, fill)
         val left = art.body.left
         val right = art.body.right
-        val gap = paceFrac - fill
+        val gapGlasses = (paceFrac - fill) * goalMl / WaterStore.GLASS_ML
         val statusColor = when {
-            gap <= 0f -> ON_PACE
-            gap <= CLOSE_GAP -> CLOSE
-            else -> BEHIND
+            gapGlasses > ON_TRACK_GLASSES -> BEHIND
+            gapGlasses < -ON_TRACK_GLASSES -> AHEAD
+            else -> ON_TRACK
         }
         if (yGhost < yWater && f.preview > 0f) {
             // Translucent water rising toward the target, shown only during the reminder animation.
