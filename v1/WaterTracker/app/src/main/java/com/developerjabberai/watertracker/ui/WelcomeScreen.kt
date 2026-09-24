@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.developerjabberai.watertracker.data.WaterStore
 import com.developerjabberai.watertracker.domain.Creeper
 import com.developerjabberai.watertracker.widget.BottleRenderer
 import com.developerjabberai.watertracker.widget.Frame
@@ -42,6 +43,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun WelcomeScreen(onDone: () -> Unit) {
     val context = LocalContext.current
+    val store = remember { WaterStore(context) }
     val preview = remember { BottleRenderer.render(context, 2000, 0.7f, Frame(totalMl = 1100f, creeper = Creeper.START.toFloat())).asImageBitmap() }
     var waiting by remember { mutableStateOf(false) }
     var added by remember { mutableStateOf(false) }
@@ -86,7 +88,15 @@ fun WelcomeScreen(onDone: () -> Unit) {
             Text("\u2713  Widget added", color = Blue, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         } else if (canPin(context)) {
             Button(
-                onClick = { requestPin(context); waiting = true },
+                onClick = {
+                    // Written immediately, before handing off to the launcher's own confirmation UI:
+                    // on some OEMs that hand-off backgrounds (and can even kill) this activity, which
+                    // would otherwise strand the user on this screen forever since the widget-detection
+                    // loop below never gets to finish and mark onboarding done itself.
+                    store.onboarded = true
+                    requestPin(context)
+                    waiting = true
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
             ) { Text("Add widget", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }

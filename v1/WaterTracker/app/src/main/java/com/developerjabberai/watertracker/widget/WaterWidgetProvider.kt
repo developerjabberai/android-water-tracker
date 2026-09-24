@@ -98,33 +98,34 @@ class WaterWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private const val PLAY_END = 40
-        private const val PULSE_FRAMES = 146
+        private const val PLAY_END = 50
+        private const val PULSE_FRAMES = 156
 
         private fun pulseFrame(i: Int, level: Float): Frame {
             return when {
                 i <= PLAY_END -> {
                     // A happy little bounce and wobble on the real character, at its real level — no
-                    // shape changes, just playful motion — instead of the old shake/burst/rebuild.
+                    // shape changes, just playful motion — instead of the old shake/burst/rebuild. Sized
+                    // to actually read at a glance (this replaces an "impossible to miss" flash/burst
+                    // effect, so it needs real amplitude, not a barely-there wobble).
                     val t = i / PLAY_END.toFloat()
                     val settle = 1f - t * 0.5f
                     val bounce = abs(sin(t * PI * 3.4)).toFloat()
                     val wag = sin(t * PI * 7).toFloat()
                     Frame(
                         totalMl = level,
-                        hop = 20f * bounce * settle,
-                        squash = 1f - 0.08f * bounce * settle,
-                        rotate = 6f * wag * settle,
-                        shakeX = 3f * wag * settle,
+                        hop = 46f * bounce * settle,
+                        squash = 1f - 0.16f * bounce * settle,
+                        rotate = 14f * wag * settle,
+                        shakeX = 8f * wag * settle,
                     )
                 }
                 else -> {
                     val j = i - PLAY_END
                     val rise = ease(((j - 8) / 16f).coerceIn(0f, 1f))
                     val drain = ((j - 62) / 14f).coerceIn(0f, 1f)
-                    var rotate = 0f; var hop = 0f; var ring = -1f
+                    var rotate = 0f; var hop = 0f
                     for (k in intArrayOf(0, 30, 60, 90)) {
-                        if (j in k..(k + 18)) ring = (j - k) / 18f
                         if (j in k..(k + 12)) {
                             val tt = (j - k) / 12f
                             rotate = 8f * sin(2 * PI * 3 * tt).toFloat() * (1f - tt)
@@ -135,7 +136,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
                         totalMl = level, phase = j * 0.5f, nudge = 0.6f,
                         lineProgress = ((j - 2) / 9f).coerceIn(0f, 1f),
                         preview = rise * (1f - drain * drain),
-                        rotate = rotate, hop = hop, ring = ring,
+                        rotate = rotate, hop = hop,
                         sweat = ((j - 58) / 6f).coerceIn(0f, 1f) * (1f - ((j - 92) / 8f).coerceIn(0f, 1f)),
                     )
                 }

@@ -38,6 +38,16 @@ class Art(
     val bodyRegion: Region = Region().apply {
         setPath(layers[bodyLayer].path, Region(0, 0, size.toInt(), size.toInt()))
     }
+
+    /**
+     * The full ink silhouette (layer 0: outline, ears, whiskers) as a region — this is the character's
+     * true visible outer edge. It's a ring shape (hollow in the middle, since the body/face show through),
+     * so on its own it can't tell "inside the character" from "inside the empty cavity"; callers that want
+     * that should test bodyRegion.contains(...) || outlineRegion.contains(...).
+     */
+    val outlineRegion: Region = Region().apply {
+        setPath(layers[0].path, Region(0, 0, size.toInt(), size.toInt()))
+    }
 }
 
 /** Loads the expression JSON files from assets (made from `v1/design/expressions` by `svg_to_json.py`). */
