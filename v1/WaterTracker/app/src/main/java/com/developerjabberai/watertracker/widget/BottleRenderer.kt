@@ -106,9 +106,12 @@ object BottleRenderer {
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        val artIndex = if (f.art >= 0) f.art else WaterStore(context).artToday()
+        // Keeping things simple for now: only the card colour rotates day to day (still picked the same
+        // way as before); the character itself is always the first one (the one with ears). The other
+        // three character designs are unused until we're ready to bring them back in.
+        val bgIndex = if (f.art >= 0) f.art else WaterStore(context).artToday()
         val card = RectF(0f, 0f, SIZE.toFloat(), SIZE.toFloat())
-        p.color = BACKGROUNDS[artIndex.coerceIn(0, BACKGROUNDS.size - 1)]
+        p.color = BACKGROUNDS[bgIndex.coerceIn(0, BACKGROUNDS.size - 1)]
         c.drawRoundRect(card, 70f, 70f, p)
         if (f.flash > 0f) {
             p.color = f.flashColor; p.alpha = (255 * f.flash.coerceIn(0f, 1f)).toInt()
@@ -116,7 +119,7 @@ object BottleRenderer {
             p.alpha = 255
         }
 
-        val art = ArtLibrary.get(context, artIndex)
+        val art = ArtLibrary.get(context, 0)
         val s = min(ART_MAX_W / art.outline.width(), ART_MAX_H / art.outline.height())
         val cx = SIZE / 2f
         val feetY = ART_TOP + art.outline.height() * s
@@ -146,7 +149,7 @@ object BottleRenderer {
             c.scale(1f, f.squash)
             c.scale(s * WIDTH_STRETCH, s)
             c.translate(-(art.outline.centerX()), -art.outline.bottom)
-            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f)
+            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f, goalMl)
             if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
             c.restore()
             c.restoreToCount(layer)
@@ -157,7 +160,7 @@ object BottleRenderer {
         if (f.celebrate in 0f..1f) drawSparkles(c, p, f.celebrate, small = false)
         if (goalReached) drawGoalBadge(c, p)
 
-        drawAmount(c, p, f.totalMl)
+        drawAmount(c, p, f.totalMl, goalMl)
         return bmp
     }
 
@@ -225,7 +228,7 @@ object BottleRenderer {
         return art.body.bottom - (art.body.bottom - top) * frac
     }
 
-    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame) {
+    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame, goalMl: Int) {
         val waterY = levelY(art, fill)
         for ((i, layer) in art.layers.withIndex()) {
             if (i in art.hidden) continue
@@ -256,7 +259,7 @@ object BottleRenderer {
         // come after the water body in the layer stack), but still clipped to the full outline so it never
         // spills past the character's silhouette.
         if (!goalReached) {
-            drawGhost(c, p, art, fill, paceFrac, f)
+            drawGhost(c, p, art, fill, paceFrac, f, goalMl)
         }
     }
 
@@ -294,29 +297,29 @@ object BottleRenderer {
     }
 
     private val BEHIND = Color.parseColor("#F0483C")
-    private val CLOSE = Color.parseColor("#D9A22B")
-    private val ON_PACE = Color.parseColor("#3FA34D")
+    private val AHEAD = Color.parseColor("#2E9BF0")
+    private val ON_TRACK = Color.parseColor("#3FA34D")
 
-    /** How far behind (as a fraction of the goal) still counts as "almost there" and gets the amber warning. */
-    private const val CLOSE_GAP = 0.04f
+    /** How far off pace (in glasses) still counts as "on track" before it reports behind/ahead instead. */
+    private const val ON_TRACK_GLASSES = 2f
 
     /**
      * Dotted line where the water should be by now, with a small bullseye marking it as a target
      * (clearer at a glance than shading, which read as an unexplained blue smudge, or a flag, which
-     * didn't read as anything in particular at this size). Colour reports status at a glance: green once
-     * you've caught up, amber when you're close, red when you're clearly behind.
+     * didn't read as anything in particular at this size). Colour reports status at a glance: green
+     * within 2 glasses of pace either way, blue when well ahead, red when clearly behind.
      */
-    private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame) {
+    private fun drawGhost(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, f: Frame, goalMl: Int) {
         if (paceFrac <= 0f) return
         val yGhost = levelY(art, paceFrac.coerceAtMost(1f))
         val yWater = levelY(art, fill)
         val left = art.body.left
         val right = art.body.right
-        val gap = paceFrac - fill
+        val gapGlasses = (paceFrac - fill) * goalMl / WaterStore.GLASS_ML
         val statusColor = when {
-            gap <= 0f -> ON_PACE
-            gap <= CLOSE_GAP -> CLOSE
-            else -> BEHIND
+            gapGlasses > ON_TRACK_GLASSES -> BEHIND
+            gapGlasses < -ON_TRACK_GLASSES -> AHEAD
+            else -> ON_TRACK
         }
         if (yGhost < yWater && f.preview > 0f) {
             // Translucent water rising toward the target, shown only during the reminder animation.
@@ -338,9 +341,22 @@ object BottleRenderer {
         // rectangular bounds, since the silhouette curves in near the shoulder/neck; scan inward at this
         // exact height for where the bottle actually ends.
         val edge = run {
-            var x = right.toInt()
             val limit = art.body.centerX().toInt()
-            while (x > limit && !art.bodyRegion.contains(x, yGhost.toInt())) x -= 4
+            val y = yGhost.toInt()
+            // "Inside the character" means inside the body fill OR inside the ink outline itself — the
+            // outline is a ring (hollow in the middle, since the face/body show through it), sitting a
+            // little outside the body fill's own edge. Using the body fill alone left the bullseye's centre
+            // visibly inset from the bottle's true visible border; this reaches it exactly.
+            fun inside(px: Int) = art.bodyRegion.contains(px, y) || art.outlineRegion.contains(px, y)
+            // Start a bit past the body fill's own bound so the scan can reach into the outline ring
+            // without starting inside it already.
+            var x = (right.toInt() + 24).coerceAtMost(art.outline.right.toInt())
+            val startX = x
+            while (x > limit && !inside(x)) x -= 4
+            // The loop above steps in by 4px at a time and stops on the first hit, which can leave the
+            // edge up to 4px inside the true boundary. Walk back out 1px at a time so the bullseye's
+            // centre lands exactly on the bottle's edge instead of visibly inward from it.
+            while (x < startX && inside(x + 1)) x += 1
             if (x > limit) x.toFloat() else right
         }
         val end = left + (edge - left) * f.lineProgress.coerceIn(0f, 1f)
@@ -449,23 +465,32 @@ object BottleRenderer {
     }
 
     /** Big number in glasses (a glass is a fixed 200 ml, independent of the half/full tap setting), e.g. "3.5 glass". */
-    private fun drawAmount(c: Canvas, p: Paint, totalMl: Float) {
+    private fun drawAmount(c: Canvas, p: Paint, totalMl: Float, goalMl: Int) {
         val glasses = totalMl / WaterStore.GLASS_ML
-        val number = "%.1f".format(glasses).trimEnd('0').trimEnd('.')
+        val current = "%.1f".format(glasses).trimEnd('0').trimEnd('.')
+        val goalGlasses = goalMl / WaterStore.GLASS_ML
+        val goalPart = "/$goalGlasses"
         val unit = "glass"
         p.style = Paint.Style.FILL; p.shader = null; p.color = INK; p.textAlign = Paint.Align.LEFT
-        p.typeface = numberFont; p.textSize = 54f
-        val numW = p.measureText(number)
+        p.typeface = numberFont
+        p.textSize = 54f
+        val currentW = p.measureText(current)
+        p.textSize = 32f
+        val goalW = p.measureText(goalPart)
         p.textSize = 38f
         val unitW = p.measureText(unit)
         val gap = 8f
-        val x = (SIZE - (numW + gap + unitW)) / 2f
+        val x = (SIZE - (currentW + goalW + gap + unitW)) / 2f
         val baseline = SIZE - 24f
         p.textSize = 54f
-        c.drawText(number, x, baseline, p)
+        c.drawText(current, x, baseline, p)
+        // "/goal" rides smaller and bottom-aligned right after the current amount, same baseline.
+        p.textSize = 32f; p.alpha = 175
+        c.drawText(goalPart, x + currentW, baseline, p)
+        p.alpha = 255
         // Bottom-aligned with the number (same baseline), not centred against it.
         p.textSize = 38f; p.alpha = 175
-        c.drawText(unit, x + numW + gap, baseline, p)
+        c.drawText(unit, x + currentW + goalW + gap, baseline, p)
         p.alpha = 255
     }
 }

@@ -31,11 +31,17 @@ class WaterWidgetProvider : AppWidgetProvider() {
                 val store = WaterStore(context)
                 val to = store.addTap()
                 val from = to - store.tapMl
+                // Claim the animation right away so a reminder pulse (or an earlier tap) mid-flight bails
+                // out on its next frame instead of running to the end before this tap gets to show anything.
+                val myToken = runToken.incrementAndGet()
+                push(context, store, Frame(to.toFloat())) // instant feedback while we wait for the lock
                 synchronized(animationLock) {
-                    animateFill(context, store, from.toFloat(), to.toFloat())
+                    if (myToken != runToken.get()) return@synchronized
+                    animateFill(context, store, from.toFloat(), to.toFloat(), myToken)
+                    if (myToken != runToken.get()) return@synchronized
                     val grew = store.creditGoalIfMet()
-                    if (grew != null) celebrate(context, store, to.toFloat(), grew.first, grew.second) else cheer(context, store, to.toFloat())
-                    refresh(context)
+                    if (grew != null) celebrate(context, store, to.toFloat(), grew.first, grew.second, myToken) else cheer(context, store, to.toFloat(), myToken)
+                    if (myToken == runToken.get()) refresh(context)
                 }
             } finally {
                 pending.finish()
@@ -52,6 +58,15 @@ class WaterWidgetProvider : AppWidgetProvider() {
         /** One animation at a time, so quick repeated taps play in order instead of tangling. */
         private val animationLock = Any()
 
+        /**
+         * Bumped every time a new animation should take over (a tap, or a fresh pulse). A running loop
+         * checks it each frame and bails out as soon as it's no longer the current one, instead of running
+         * to completion — otherwise a tap during the ~6.5s reminder pulse would sit unseen until the pulse
+         * finished. addTap() itself already wrote the new total before any of this, so the count is never
+         * lost; this only affects how quickly the widget shows it.
+         */
+        private val runToken = java.util.concurrent.atomic.AtomicInteger(0)
+
         private fun ids(context: Context): Pair<AppWidgetManager, IntArray> {
             val manager = AppWidgetManager.getInstance(context)
             return manager to manager.getAppWidgetIds(ComponentName(context, WaterWidgetProvider::class.java))
@@ -65,57 +80,52 @@ class WaterWidgetProvider : AppWidgetProvider() {
 
         /**
          * The reminder, built to be impossible to miss (about 6.5 s):
-         * charge (the character shakes and the card flashes), blast (it bursts into pieces with shockwave rings),
-         * rebuild (the pieces are pulled back as the bottle re-forms with a bounce, refilling to what you've drunk),
-         * then alert (the dotted target line draws, the gap fills, ping rings and wobbles repeat).
+         * play (a happy little bounce and wobble, like it's glad to see you), then alert (the dotted
+         * target line draws, the gap fills, ping rings and wobbles repeat).
          */
-        fun pulse(context: Context) = synchronized(animationLock) {
-            val store = WaterStore(context)
-            val level = store.todayMl().toFloat()
-            for (i in 1..PULSE_FRAMES) {
-                push(context, store, pulseFrame(i, level))
-                Thread.sleep(FRAME_MS)
+        fun pulse(context: Context) {
+            val myToken = runToken.incrementAndGet()
+            synchronized(animationLock) {
+                if (myToken != runToken.get()) return@synchronized
+                val store = WaterStore(context)
+                val level = store.todayMl().toFloat()
+                for (i in 1..PULSE_FRAMES) {
+                    if (myToken != runToken.get()) return@synchronized
+                    push(context, store, pulseFrame(i, level))
+                    Thread.sleep(FRAME_MS)
+                }
+                refresh(context)
             }
-            refresh(context)
         }
 
-        private const val CHARGE_END = 8
-        private const val BLAST_END = 16
-        private const val REBUILD_END = 40
-        private const val PULSE_FRAMES = 146
-        private val CORAL = android.graphics.Color.parseColor("#FF6F91")
+        private const val PLAY_END = 50
+        private const val PULSE_FRAMES = 156
 
         private fun pulseFrame(i: Int, level: Float): Frame {
-            val blast = if (i in (CHARGE_END + 1)..REBUILD_END) (i - CHARGE_END - 1) / (REBUILD_END - CHARGE_END - 1f) else -1f
             return when {
-                i <= CHARGE_END -> {
-                    val t = i / CHARGE_END.toFloat()
-                    val sign = if (i % 2 == 0) 1f else -1f
+                i <= PLAY_END -> {
+                    // A happy little bounce and wobble on the real character, at its real level — no
+                    // shape changes, just playful motion — instead of the old shake/burst/rebuild. Sized
+                    // to actually read at a glance (this replaces an "impossible to miss" flash/burst
+                    // effect, so it needs real amplitude, not a barely-there wobble).
+                    val t = i / PLAY_END.toFloat()
+                    val settle = 1f - t * 0.5f
+                    val bounce = abs(sin(t * PI * 3.4)).toFloat()
+                    val wag = sin(t * PI * 7).toFloat()
                     Frame(
-                        totalMl = level, shakeX = sign * 14f * t, rotate = -sign * 8f * t, scale = 1f + 0.2f * t,
-                        flash = if (i % 2 == 0) 0.55f * t else 0f, flashColor = CORAL,
-                    )
-                }
-                i <= BLAST_END -> Frame(
-                    totalMl = level, opacity = 0f, blast = blast,
-                    flash = ((CHARGE_END + 5 - i) / 4f).coerceIn(0f, 1f), flashColor = android.graphics.Color.WHITE,
-                )
-                i <= REBUILD_END -> {
-                    val u = (i - BLAST_END) / (REBUILD_END - BLAST_END).toFloat()
-                    Frame(
-                        totalMl = level * ease((u * 1.3f).coerceAtMost(1f)),
-                        phase = i * 0.6f, waveAmp = 1f - u,
-                        scale = 1f - kotlin.math.exp(-5f * u) * kotlin.math.cos(2 * PI * 1.5 * u).toFloat() * 0.9f,
-                        opacity = (u * 3f).coerceIn(0f, 1f), blast = blast,
+                        totalMl = level,
+                        hop = 46f * bounce * settle,
+                        squash = 1f - 0.16f * bounce * settle,
+                        rotate = 14f * wag * settle,
+                        shakeX = 8f * wag * settle,
                     )
                 }
                 else -> {
-                    val j = i - REBUILD_END
+                    val j = i - PLAY_END
                     val rise = ease(((j - 8) / 16f).coerceIn(0f, 1f))
                     val drain = ((j - 62) / 14f).coerceIn(0f, 1f)
-                    var rotate = 0f; var hop = 0f; var ring = -1f
+                    var rotate = 0f; var hop = 0f
                     for (k in intArrayOf(0, 30, 60, 90)) {
-                        if (j in k..(k + 18)) ring = (j - k) / 18f
                         if (j in k..(k + 12)) {
                             val tt = (j - k) / 12f
                             rotate = 8f * sin(2 * PI * 3 * tt).toFloat() * (1f - tt)
@@ -126,7 +136,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
                         totalMl = level, phase = j * 0.5f, nudge = 0.6f,
                         lineProgress = ((j - 2) / 9f).coerceIn(0f, 1f),
                         preview = rise * (1f - drain * drain),
-                        rotate = rotate, hop = hop, ring = ring,
+                        rotate = rotate, hop = hop,
                         sweat = ((j - 58) / 6f).coerceIn(0f, 1f) * (1f - ((j - 92) / 8f).coerceIn(0f, 1f)),
                     )
                 }
@@ -134,9 +144,10 @@ class WaterWidgetProvider : AppWidgetProvider() {
         }
 
         /** After a tap: a happy little bounce with a few sparkles. */
-        private fun cheer(context: Context, store: WaterStore, level: Float) {
+        private fun cheer(context: Context, store: WaterStore, level: Float, myToken: Int) {
             val n = 26
             for (i in 1..n) {
+                if (myToken != runToken.get()) return
                 val t = i / n.toFloat()
                 val settle = 1f - t
                 push(
@@ -153,9 +164,10 @@ class WaterWidgetProvider : AppWidgetProvider() {
         }
 
         /** Goal reached for the day: big hops with the shine and sparkles, while the creeper grows a level. */
-        private fun celebrate(context: Context, store: WaterStore, level: Float, creeperFrom: Int, creeperTo: Int) {
+        private fun celebrate(context: Context, store: WaterStore, level: Float, creeperFrom: Int, creeperTo: Int, myToken: Int) {
             val n = 48
             for (i in 1..n) {
+                if (myToken != runToken.get()) return
                 val t = i / n.toFloat()
                 val settle = 1f - t * 0.7f
                 val bounce = abs(sin(3 * PI * t)).toFloat()
@@ -176,8 +188,9 @@ class WaterWidgetProvider : AppWidgetProvider() {
         private fun ease(t: Float) = t * t * (3f - 2f * t)
 
         /** Frame-sequence animation: water eases up while the wave settles. */
-        private fun animateFill(context: Context, store: WaterStore, from: Float, to: Float) {
+        private fun animateFill(context: Context, store: WaterStore, from: Float, to: Float, myToken: Int) {
             for (i in 1..FILL_FRAMES) {
+                if (myToken != runToken.get()) return
                 val t = i / FILL_FRAMES.toFloat()
                 val eased = 1f - (1f - t).pow(3)
                 push(context, store, Frame(from + (to - from) * eased, phase = t * 9f, waveAmp = 1f - t))
@@ -188,7 +201,7 @@ class WaterWidgetProvider : AppWidgetProvider() {
         private fun push(context: Context, store: WaterStore, frame: Frame) {
             val (manager, ids) = ids(context)
             if (ids.isEmpty()) return
-            val pace = Pace.fraction(LocalTime.now())
+            val pace = store.paceOverrideForTesting(context) ?: Pace.fraction(LocalTime.now())
             val bmp = BottleRenderer.render(context, store.goalMl, pace, frame)
             val views = RemoteViews(context.packageName, R.layout.widget_water).apply {
                 setImageViewBitmap(R.id.widget_image, bmp)

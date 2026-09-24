@@ -1,10 +1,6 @@
 package com.developerjabberai.watertracker.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asImageBitmap
-import com.developerjabberai.watertracker.widget.BottleRenderer
-import com.developerjabberai.watertracker.widget.Frame
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -99,13 +95,18 @@ fun ConfigScreen(resumeTick: Int = 0) {
             }
         }
 
+        if ((context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Section("Debug") {
+                TextButton(onClick = { Thread { WaterWidgetProvider.pulse(context) }.start() }) { Text("Test pulse", color = Blue) }
+            }
+        }
+
         // "Your creeper" section disabled for now (looked congested); Creeper.kt still tracks the level quietly.
 
         Section("Last 7 days") { WeekChart(history, goal) }
 
         Section("Daily goal") {
             GoalPicker(listOf(2000, 3000, 4000), goal) { goal = it; store.goalMl = it; changed() }
-            Hint("${goal / WaterStore.GLASS_ML} glasses / ${goal / 1000} L")
         }
 
         Section("1 Tap on widget fills") {
@@ -144,16 +145,23 @@ private fun Section(title: String, content: @Composable () -> Unit) {
     }
 }
 
-/** Goal tiles use the widget's own bottle drawing, so the picker previews exactly what the widget shows. */
+/**
+ * Every goal shows the same character now, so a full bottle preview per tile is redundant — the
+ * glasses/litres numbers are what actually distinguishes the goals, so those lead instead.
+ */
 @Composable
 private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
-    val context = LocalContext.current
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         goals.forEach { goal ->
-            // Drawn a hair under full so the goal-reached badge stays off; the widget prints the amount as the label.
-            val image = remember(goal) { BottleRenderer.render(context, goal, 0f, Frame(totalMl = goal * 0.999f, creeper = 0f)).asImageBitmap() }
             OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
-                Image(image, contentDescription = "${goal / 1000} litre goal", modifier = Modifier.fillMaxWidth())
+                Text(
+                    "${goal / WaterStore.GLASS_ML}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Ink,
+                )
+                Text("glasses", style = MaterialTheme.typography.labelMedium, color = Ink.copy(alpha = 0.65f))
+                Text("${goal / 1000} L", style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.6f))
             }
         }
     }

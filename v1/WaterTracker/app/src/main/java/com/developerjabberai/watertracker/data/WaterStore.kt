@@ -74,6 +74,13 @@ class WaterStore(context: Context) {
         (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
             prefs.getBoolean("test_any_hour", false)
 
+    /** Testing only: overrides the widget's pace marker instead of computing it from the clock. Always ignored in release builds. */
+    fun paceOverrideForTesting(context: Context): Float? {
+        if ((context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) return null
+        val v = prefs.getFloat("pace_override", -1f)
+        return if (v in 0f..1f) v else null
+    }
+
     /** So we only ask for the notification permission once. */
     var notificationsAsked: Boolean
         get() = prefs.getBoolean("notifications_asked", false)
