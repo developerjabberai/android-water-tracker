@@ -133,7 +133,6 @@ object BottleRenderer {
 
         val fill = (f.totalMl / goalMl).coerceIn(0f, 1f)
         val goalReached = f.totalMl >= goalMl
-        val litres = (goalMl / 1000).coerceAtLeast(1)
         // Creeper is disabled for now (looked congested on the widget); level-tracking still runs quietly in the background.
 
         val centerY = feetY - art.outline.height() * s * 0.45f
@@ -149,7 +148,7 @@ object BottleRenderer {
             c.scale(1f, f.squash)
             c.scale(s * WIDTH_STRETCH, s)
             c.translate(-(art.outline.centerX()), -art.outline.bottom)
-            drawArt(c, p, art, fill, paceFrac, litres, goalReached, f, goalMl)
+            drawArt(c, p, art, fill, paceFrac, goalReached, f, goalMl)
             if (f.sweat > 0f) drawSweat(c, p, art, f.sweat)
             c.restore()
             c.restoreToCount(layer)
@@ -228,7 +227,7 @@ object BottleRenderer {
         return art.body.bottom - (art.body.bottom - top) * frac
     }
 
-    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, litres: Int, goalReached: Boolean, f: Frame, goalMl: Int) {
+    private fun drawArt(c: Canvas, p: Paint, art: Art, fill: Float, paceFrac: Float, goalReached: Boolean, f: Frame, goalMl: Int) {
         val waterY = levelY(art, fill)
         for ((i, layer) in art.layers.withIndex()) {
             if (i in art.hidden) continue
@@ -239,7 +238,7 @@ object BottleRenderer {
                     c.clipPath(layer.path)
                     if (fill > 0f) drawWave(c, p, art, waterY, f.phase, f.waveAmp, art.bodyColor, 255)
                     if (i == art.bodyLayer) {
-                        drawTicks(c, p, art, litres)
+                        drawTicks(c, p, art, goalMl)
                         if (f.celebrate in 0f..1f) drawShine(c, p, art, f.celebrate)
                     }
                     c.restore()
@@ -382,15 +381,17 @@ object BottleRenderer {
         c.drawCircle(x, y, r * 0.4f, p)
     }
 
-    /** A tick at each litre, starting at the body's left edge, so the one bottle still tells 2 L from 3 L from 4 L. */
-    private fun drawTicks(c: Canvas, p: Paint, art: Art, litres: Int) {
-        // A 2 L goal would draw exactly one tick, at the dead centre of the bottle — not useful (there's
-        // nothing to distinguish), and easy to mistake for a stray line right where the face sits.
-        if (litres < 3) return
+    /** A tick at each real litre mark (1 L, 2 L, ...) below the goal, starting at the body's left edge. */
+    private fun drawTicks(c: Canvas, p: Paint, art: Art, goalMl: Int) {
+        // Small goals would draw just one tick (or a lone one near the face) — nothing to distinguish, and
+        // easy to mistake for a stray line — so ticks only appear from a 3 L goal up.
+        if (goalMl < 3000) return
         p.style = Paint.Style.STROKE; p.shader = null; p.strokeWidth = 24f; p.strokeCap = Paint.Cap.ROUND
         p.color = INK; p.alpha = 190
-        for (k in 1 until litres) {
-            val y = levelY(art, k.toFloat() / litres)
+        var litre = 1
+        while (litre * 1000 < goalMl) {
+            val y = levelY(art, litre * 1000f / goalMl)
+            litre++
             var x = art.body.left.toInt()
             val limit = art.body.centerX().toInt()
             while (x < limit && !art.bodyRegion.contains(x, y.toInt())) x += 6

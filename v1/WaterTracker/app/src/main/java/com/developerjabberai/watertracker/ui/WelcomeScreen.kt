@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 fun WelcomeScreen(onDone: () -> Unit) {
     val context = LocalContext.current
     val store = remember { WaterStore(context) }
-    val preview = remember { BottleRenderer.render(context, 2000, 0.7f, Frame(totalMl = 1100f, creeper = Creeper.START.toFloat())).asImageBitmap() }
+    val preview = remember { BottleRenderer.render(context, WaterStore.DEFAULT_GOAL_ML, 0.7f, Frame(totalMl = 800f, creeper = Creeper.START.toFloat())).asImageBitmap() }
     var waiting by remember { mutableStateOf(false) }
     var added by remember { mutableStateOf(false) }
 

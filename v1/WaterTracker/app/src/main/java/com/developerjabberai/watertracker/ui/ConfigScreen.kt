@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +38,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +70,13 @@ fun ConfigScreen(resumeTick: Int = 0) {
 
     // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
     val widgets = remember(resumeTick) { widgetCount(context) }
+
+    // A quiet ask for a rating, a moment after the screen settles (see maybeAskForReview for the rules).
+    LaunchedEffect(Unit) {
+        val activity = context as? android.app.Activity ?: return@LaunchedEffect
+        kotlinx.coroutines.delay(1500)
+        maybeAskForReview(activity, store)
+    }
 
     Column(Modifier.fillMaxSize().background(Color(0xFFF4FAFD)).statusBarsPadding().navigationBarsPadding()) {
     Column(
@@ -106,7 +115,7 @@ fun ConfigScreen(resumeTick: Int = 0) {
         Section("Last 7 days") { WeekChart(history, goal) }
 
         Section("Daily goal") {
-            GoalPicker(listOf(2000, 3000, 4000), goal) { goal = it; store.goalMl = it; changed() }
+            GoalPicker(WaterStore.GOAL_GLASSES.map { it * WaterStore.GLASS_ML }, goal) { goal = it; store.goalMl = it; changed() }
         }
 
         Section("1 Tap on widget fills") {
@@ -151,21 +160,30 @@ private fun Section(title: String, content: @Composable () -> Unit) {
  */
 @Composable
 private fun GoalPicker(goals: List<Int>, selected: Int, onPick: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        goals.forEach { goal ->
-            OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
-                Text(
-                    "${goal / WaterStore.GLASS_ML}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Ink,
-                )
-                Text("glasses", style = MaterialTheme.typography.labelMedium, color = Ink.copy(alpha = 0.65f))
-                Text("${goal / 1000} L", style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.6f))
+    // Seven choices don't fit one row at a readable size, so they wrap into rows of four.
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        goals.chunked(4).forEach { rowGoals ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowGoals.forEach { goal ->
+                    OptionTile(selected = goal == selected, modifier = Modifier.weight(1f), onClick = { onPick(goal) }) {
+                        Text(
+                            "${goal / WaterStore.GLASS_ML}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Ink,
+                        )
+                        Text("glasses", style = MaterialTheme.typography.labelMedium, color = Ink.copy(alpha = 0.65f))
+                        Text("${litres(goal)} L", style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.6f))
+                    }
+                }
+                repeat(4 - rowGoals.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
 }
+
+/** 1000 -> "1", 1400 -> "1.4" (whole litres shown without the ".0"). */
+private fun litres(ml: Int): String = "%.1f".format(ml / 1000f).removeSuffix(".0")
 
 /** Same glass, two fill levels: what one tap logs. */
 @Composable

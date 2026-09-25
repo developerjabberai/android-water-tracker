@@ -13,7 +13,7 @@ class WaterStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("water", Context.MODE_PRIVATE)
 
     var goalMl: Int
-        get() = prefs.getInt("goal", 2000)
+        get() = prefs.getInt("goal", DEFAULT_GOAL_ML)
         set(v) = prefs.edit().putInt("goal", v).apply()
 
     /** What one tap on the widget logs: half a glass (100 ml) or a whole glass (200 ml). */
@@ -86,6 +86,11 @@ class WaterStore(context: Context) {
         get() = prefs.getBoolean("notifications_asked", false)
         set(v) = prefs.edit().putBoolean("notifications_asked", v).apply()
 
+    /** When we last showed Google's review card (0 = never), so we can wait before ever asking again. */
+    var lastReviewAskMs: Long
+        get() = prefs.getLong("last_review_ask", 0L)
+        set(v) = prefs.edit().putLong("last_review_ask", v).apply()
+
     /** Set once the first-run welcome has been completed or skipped. */
     var onboarded: Boolean
         get() = prefs.getBoolean("onboarded", false)
@@ -127,6 +132,9 @@ class WaterStore(context: Context) {
 
     companion object {
         const val GLASS_ML = 200
+        /** Daily goal choices, in glasses (200 ml each): 1, 1.4, 2, 2.4, 3, 3.4 and 4 litres. */
+        val GOAL_GLASSES = listOf(5, 7, 10, 12, 15, 17, 20)
+        const val DEFAULT_GOAL_ML = 7 * GLASS_ML
         const val HALF_GLASS_ML = GLASS_ML / 2
     }
 }
