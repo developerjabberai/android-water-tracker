@@ -42,6 +42,9 @@ android {
         release {
             optimization {
                 enable = true
+                keepRules {
+                    files.add(project.file("proguard-rules.pro"))
+                }
             }
             if (keystoreProps.isNotEmpty()) signingConfig = signingConfigs.getByName("release")
         }
@@ -64,6 +67,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.play.review.ktx)
+    // Google's review library pulls in an ancient fragment (1.1.0) that lint rejects; pin a current one.
+    implementation(libs.androidx.fragment)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

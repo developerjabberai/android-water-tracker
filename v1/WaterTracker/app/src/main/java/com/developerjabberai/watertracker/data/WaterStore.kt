@@ -86,6 +86,11 @@ class WaterStore(context: Context) {
         get() = prefs.getBoolean("notifications_asked", false)
         set(v) = prefs.edit().putBoolean("notifications_asked", v).apply()
 
+    /** When we last showed Google's review card (0 = never), so we can wait before ever asking again. */
+    var lastReviewAskMs: Long
+        get() = prefs.getLong("last_review_ask", 0L)
+        set(v) = prefs.edit().putLong("last_review_ask", v).apply()
+
     /** Set once the first-run welcome has been completed or skipped. */
     var onboarded: Boolean
         get() = prefs.getBoolean("onboarded", false)

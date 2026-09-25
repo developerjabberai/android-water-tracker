@@ -37,6 +37,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,13 @@ fun ConfigScreen(resumeTick: Int = 0) {
 
     // Re-checked every time the app comes back to the front, so it stays right after adding or removing one.
     val widgets = remember(resumeTick) { widgetCount(context) }
+
+    // A quiet ask for a rating, a moment after the screen settles (see maybeAskForReview for the rules).
+    LaunchedEffect(Unit) {
+        val activity = context as? android.app.Activity ?: return@LaunchedEffect
+        kotlinx.coroutines.delay(1500)
+        maybeAskForReview(activity, store)
+    }
 
     Column(Modifier.fillMaxSize().background(Color(0xFFF4FAFD)).statusBarsPadding().navigationBarsPadding()) {
     Column(
