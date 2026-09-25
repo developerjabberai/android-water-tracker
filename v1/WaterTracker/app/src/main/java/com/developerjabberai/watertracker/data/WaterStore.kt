@@ -13,7 +13,7 @@ class WaterStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("water", Context.MODE_PRIVATE)
 
     var goalMl: Int
-        get() = prefs.getInt("goal", 2000)
+        get() = prefs.getInt("goal", DEFAULT_GOAL_ML)
         set(v) = prefs.edit().putInt("goal", v).apply()
 
     /** What one tap on the widget logs: half a glass (100 ml) or a whole glass (200 ml). */
@@ -132,6 +132,9 @@ class WaterStore(context: Context) {
 
     companion object {
         const val GLASS_ML = 200
+        /** Daily goal choices, in glasses (200 ml each): 1, 1.4, 2, 2.4, 3, 3.4 and 4 litres. */
+        val GOAL_GLASSES = listOf(5, 7, 10, 12, 15, 17, 20)
+        const val DEFAULT_GOAL_ML = 7 * GLASS_ML
         const val HALF_GLASS_ML = GLASS_ML / 2
     }
 }
